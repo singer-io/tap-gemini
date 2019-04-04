@@ -1,0 +1,89 @@
+{
+  "type": [
+    "integer",
+    "float",
+    "string",
+    "date-time"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "Day": {
+      "type": "date-time"
+    },
+    "Hour": {
+      "type": "integer"
+    },
+    "Advertiser ID": {
+      "type": "integer"
+    },
+    "Advertiser Name": {
+      "type": "string"
+    },
+    "Advertiser Tracking URL": {
+      "type": "string"
+    },
+    "Advertiser Currency": {
+      "type": "string"
+    },
+    "Campaign ID": {
+      "type": "integer"
+    },
+    "Campaign Name": {
+      "type": "string"
+    },
+    "Campaign Tracking URL": {
+      "type": "string"
+    },
+    "Campaign Custom Parameters": {
+      "type": "string"
+    },
+    "Ad Group ID": {
+      "type": "integer"
+    },
+    "Ad Group Name": {
+      "type": "string"
+    },
+    "Ad Group Tracking URL": {
+      "type": "string"
+    },
+    "Ad Group Custom Parameters": {
+      "type": "string"
+    },
+    "Ad ID": {
+      "type": "integer"
+    },
+    "Ad Title": {
+      "type": "string"
+    },
+    "Ad Description": {
+      "type": "string"
+    },
+    "Ad Final URL": {
+      "type": "string"
+    },
+    "Ad Landing URL": {
+      "type": "string"
+    },
+    "Ad Tracking URL": {
+      "type": "string"
+    },
+    "Ad Custom Parameters": {
+      "type": "string"
+    },
+    "Device Type": {
+      "type": "string"
+    },
+    "Source Name": {
+      "type": "string"
+    },
+    "Spend": {
+      "type": "float"
+    },
+    "Impressions": {
+      "type": "integer"
+    },
+    "Clicks": {
+      "type": "integer"
+    }
+  }
+}
