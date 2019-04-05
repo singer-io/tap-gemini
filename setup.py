@@ -4,9 +4,9 @@ from setuptools import setup
 setup(
     name="tap-gemini",
     version="0.1.0",
-    description="Singer.io tap for extracting data",
-    author="Stitch",
-    url="http://singer.io",
+    description="Singer.io tap for extracting data from Yahoo Gemini",
+    author="Joe Heffer",
+    url="https://bitbucket.org/Joe_Heffer/tap-gemini",
     classifiers=["Programming Language :: Python :: 3 :: Only"],
     py_modules=["tap_gemini"],
     install_requires=[
@@ -18,7 +18,7 @@ setup(
     tap-gemini=tap_gemini:main
     """,
     packages=["tap_gemini"],
-    package_data = {
+    package_data={
         "schemas": ["tap_gemini/schemas/*.json"]
     },
     include_package_data=True,

@@ -3,7 +3,6 @@
 Yahoo Gemini API transport layer via a HTTP session
 """
 
-import os.path
 import logging
 import datetime
 import getpass
@@ -12,38 +11,43 @@ import urllib.parse
 
 import requests
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
+
+BASE_URL_FORMAT = "https://api.gemini.yahoo.com/v{}/rest/"
 
 
 class GeminiSession(requests.Session):
     """Yahoo Gemini HTTP API Session"""
 
-    def __init__(self, client_id: str):
+    def __init__(self, client_id: str, api_version: int = 3, access_token: str = None,
+                 user_agent: str = None):
 
         # Initialise HTTP session
         super().__init__()
 
+        self._access_token = access_token
+
+        self.client_id = client_id
+        self.base_url = BASE_URL_FORMAT.format(api_version)
+
         # Update HTTP headers
         self.headers.update(self.headers_extra)
 
-    @property
-    def headers_extra(self) -> dict:
-        return {
-            'Authorization': 'Bearer {}'.format(self.access_token)
-        }
+        # Overwrite user agent
+        if user_agent:
+            self.headers.update({'User-Agent': user_agent})
 
     @property
-    def access_token_key(self) -> str:
-        """The key for the variable key-value store used to store the access token"""
-        return self.config['local']['access_token_key']
+    def headers_extra(self) -> dict:
+        """Extra HTTP headers for this API"""
+        return {
+            'Authorization': 'Bearer {token}'.format(token=self.access_token)
+        }
 
     @property
     def access_token(self) -> str:
         """OAuth 2.0 access token"""
-        try:
-            access_token = Variable.get(self.access_token_key, None)
-        except KeyError:
-            access_token = ''
+        access_token = self._access_token
 
         # Get new token
         if not access_token:
@@ -54,47 +58,23 @@ class GeminiSession(requests.Session):
 
     @access_token.deleter
     def access_token(self) -> None:
-        Variable.set(self.access_token_key, '')
+        """OAuth 2.0 Access Token"""
+        self._access_token = None
 
     @access_token.setter
     def access_token(self, new_token: str) -> None:
-        Variable.set(self.access_token_key, new_token)
-
-    @property
-    def client_id(self) -> str:
-        return self.config['api']['client_id']
-
-    @property
-    def local_directory(self) -> str:
-        """The local filesystem directory to store serialised data"""
-        return os.path.join(os.path.expanduser('~'), self.settings['local']['path'])
-
-    @property
-    def credentials_path(self) -> str:
-        return os.path.join(self.local_directory, self.config['local']['auth_file'])
-
-    @property
-    def credentials(self) -> dict:
-        try:
-            with open(self.credentials_path) as file:
-                credentials = yaml.safe_load(file)
-        except FileExistsError:
-            client_secret = getpass.getpass('Client secret: ')
-            refresh_token = getpass.getpass('Refresh token: ')
-
-            credentials = dict(
-
-            )
-
-        return credentials
+        """Access token setter"""
+        self._access_token = new_token
 
     @property
     def client_secret(self) -> str:
-        return self.credentials['client_secret']
+        """OAuth Client secret"""
+        return getpass.getpass('Client secret:')
 
     @property
     def refresh_token(self) -> str:
-        return self.credentials['refresh_token']
+        """OAuth refresh token"""
+        return getpass.getpass('Refresh token:')
 
     def refresh_access_token(self):
         """
@@ -110,12 +90,12 @@ class GeminiSession(requests.Session):
 
         :returns: Authentication meta-data
         """
-        logging.info('Client ID: {}'.format(self.client_id))
         response = self.post(
             url='https://api.login.yahoo.com/oauth2/get_token',
             data=dict(
                 client_id=self.client_id,
-
+                client_secret=self.client_secret,
+                refresh_token=self.refresh_token,
                 grant_type='refresh_token',
                 redirect_uri='oob',  # no redirect URL (server-side authentication)
             ),
@@ -128,17 +108,17 @@ class GeminiSession(requests.Session):
 
         # Debugging info
         for key, value in data.items():
+
+            # Obfuscate
             if key == 'refresh_token':
                 value = '***********************'
-            logger.debug("REFRESH {}: {}".format(key, value))
+
+            LOGGER.debug("REFRESH %s: %s", key, value)
 
         return token
 
-    @property
-    def base_url(self) -> str:
-        return self.config['api']['base_url']
-
     def build_url(self, endpoint: str) -> str:
+        """Build the URI for the specified endpoint"""
         return urllib.parse.urljoin(self.base_url, endpoint)
 
     def request(self, *args, **kwargs) -> requests.Response:
@@ -148,20 +128,23 @@ class GeminiSession(requests.Session):
         response = super().request(*args, **kwargs)
 
         # Log HTTP headers
-        if logger.getEffectiveLevel() <= logging.DEBUG:
+        if LOGGER.getEffectiveLevel() <= logging.DEBUG:
             for header, value in response.request.headers.items():
+
+                # Obfuscate sensitive info
                 if header == 'Authorization':
                     value = '************************'
-                logger.debug("REQUEST {}: {}".format(header, value))
+
+                LOGGER.debug("REQUEST %s: %s", header, value)
             for header, value in response.headers.items():
-                logger.debug("RESPONSE {}: {}".format(header, value))
+                LOGGER.debug("RESPONSE %s: %s", header, value)
 
         try:
             response.raise_for_status()
 
         # Handle HTTP errors
-        except requests.HTTPError as e:
-            response = e.response
+        except requests.HTTPError as http_error:
+            response = http_error.response
 
             # Clear authentication info
             if response.status_code == http.HTTPStatus.UNAUTHORIZED:
@@ -173,29 +156,36 @@ class GeminiSession(requests.Session):
 
             # Log error messages
             for key, value in data.items():
-                logger.error("{}: {}".format(key, value))
+                LOGGER.error("%s: %s", key, value)
 
             for error in data.get('errors', dict()):
                 for key, value in error.items():
-                    logger.error("{}: {}".format(key, value))
+                    LOGGER.error("%s: %s", key, value)
 
             raise
 
         return response
 
-    def call(self, *args, **kwargs):
-        """Call API endpoint"""
-        response = self.get(*args, **kwargs)
+    def call(self, endpoint: str, **kwargs) -> dict:
+        """Make a call to an API endpoint and return response data"""
+
+        url = kwargs.get('url', self.build_url(endpoint=endpoint))
+
+        LOGGER.info(url)
+
+        # Retrieve HTTP response
+        response = self.get(url=url, **kwargs)
+
         data = response.json()
 
-        response = data.pop('response')
+        api_response = data.pop('response')
+
+        # Raise exceptions
         errors = data.pop('errors')
+
         if errors:
             for error in errors:
-                logger.error(error)
+                LOGGER.error(error)
             raise RuntimeError(errors)
 
-        for key, value in data.items():
-            logger.info("CALL {}: {}".format(key, value))
-
-        return response
+        return api_response
