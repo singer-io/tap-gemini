@@ -39,8 +39,8 @@ def get_abs_path(path: str) -> str:
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), path)
 
 
-def load_config(dir_path: str) -> dict:
-    """Load all config files from the specified directory"""
+def load_directory(dir_path: str) -> dict:
+    """Load all configuration files in the specified directory"""
 
     abs_path = get_abs_path(dir_path)
 
@@ -55,7 +55,7 @@ def load_config(dir_path: str) -> dict:
         with open(path) as file:
             schemas[file_raw] = json.load(file)
 
-            LOGGER.info('Loaded "%s"', file.name)
+            LOGGER.debug('Loaded "%s"', file.name)
 
     return schemas
 
@@ -63,25 +63,23 @@ def load_config(dir_path: str) -> dict:
 def load_schemas() -> dict:
     """Load schemas from config files"""
 
-    return load_config(SCHEMAS_DIR)
+    return load_directory(SCHEMAS_DIR)
 
 
 def load_metadata() -> dict:
     """Load metadata from config files"""
 
-    return load_config(METADATA_DIR)
+    return load_directory(METADATA_DIR)
 
 
 def load_key_properties() -> dict:
     """Load key properties from config files"""
 
-    return load_config(KEY_PROPERTIES_DIR)
+    return load_directory(KEY_PROPERTIES_DIR)
 
 
-def discover() -> dict:
+def discover() -> singer.Catalog:
     """Discover catalog of schemas ie. reporting cube definitions"""
-
-    LOGGER.info('Discovering schemas...')
 
     raw_schemas = load_schemas()
     metadata = load_metadata()
@@ -98,19 +96,18 @@ def discover() -> dict:
         stream_key_properties.extend(key_properties.get(schema_name, list()))
 
         # create and add catalog entry
-        catalog_entry = {
-            'stream': schema_name,
-            'tap_stream_id': schema_name,
-            'schema': schema,
-            'metadata': stream_metadata,
-            'key_properties': stream_key_properties
-        }
+        catalog_entry = singer.catalog.CatalogEntry()
+        catalog_entry.stream = schema_name
+        catalog_entry.tap_stream_id = schema_name
+        catalog_entry.schema = schema
+        catalog_entry.metadata = stream_metadata
+        catalog_entry.key_properties = stream_key_properties
         streams.append(catalog_entry)
 
-    return dict(streams=streams)
+    return singer.Catalog(streams)
 
 
-def get_selected_streams(catalog: dict) -> list:
+def get_selected_streams(catalog: singer.Catalog) -> list:
     """
     Gets selected streams.  Checks schema's 'selected' first (legacy)
     and then checks metadata (current), looking for an empty breadcrumb
@@ -118,16 +115,16 @@ def get_selected_streams(catalog: dict) -> list:
     """
     selected_streams = list()
 
-    for stream in catalog['streams']:
-        stream_metadata = singer.metadata.to_map(stream['metadata'])
+    for stream in catalog.streams:
+        stream_metadata = singer.metadata.to_map(stream.metadata)
         # stream metadata will have an empty breadcrumb
         if singer.metadata.get(stream_metadata, (), "selected"):
-            selected_streams.append(stream['tap_stream_id'])
+            selected_streams.append(stream.tap_stream_id)
 
     return selected_streams
 
 
-def sync(config: dict, state: dict, catalog: dict):
+def sync(config: dict, state: dict, catalog: singer.Catalog):
     """Synchronise data from source schemas using input context"""
 
     # Parse date
@@ -136,9 +133,9 @@ def sync(config: dict, state: dict, catalog: dict):
     selected_stream_ids = get_selected_streams(catalog)
 
     # Loop over streams in catalog
-    for stream in catalog['streams']:
+    for stream in catalog.streams:
 
-        stream_id = stream['tap_stream_id']
+        stream_id = stream.tap_stream_id
 
         # Skip if not selected for sync
         if stream_id not in selected_stream_ids:
@@ -149,8 +146,8 @@ def sync(config: dict, state: dict, catalog: dict):
         # Emit schema
         singer.write_schema(
             stream_name=stream_id,
-            schema=stream['schema'],
-            key_properties=stream['key_properties']
+            schema=stream.schema,
+            key_properties=stream.key_properties
         )
 
         # Create data stream
@@ -199,11 +196,8 @@ def main():
         else:
             catalog = discover()
 
-        # Ensure data type is dictionary
-        try:
-            catalog = catalog.to_dict()
-        except AttributeError:
-            pass
+        if not isinstance(catalog, singer.Catalog):
+            raise ValueError('Catalogue is not of type singer.Catalog')
 
         sync(args.config, args.state, catalog)
 

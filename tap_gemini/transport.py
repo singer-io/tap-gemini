@@ -51,7 +51,8 @@ class GeminiSession(requests.Session):
 
         # Get new token
         if not access_token:
-            access_token = self.refresh_access_token()
+            auth_data = self.authenticate()
+            access_token = auth_data['access_token']
             self.access_token = access_token
 
         return access_token
@@ -74,16 +75,60 @@ class GeminiSession(requests.Session):
     @property
     def refresh_token(self) -> str:
         """OAuth refresh token"""
-        return getpass.getpass('Refresh token:')
+        token = getpass.getpass('Refresh token:')
 
-    def refresh_access_token(self):
+        if not token:
+            self.request_authentication()
+            raise NotImplementedError()
+
+        return token
+
+    def _request_authentication(self) -> requests.Response:
+        """
+        Authorization Code Flow for Server-side Apps
+
+        Step 2: Get an authorization URL and authorize access
+        https://developer.yahoo.com/oauth2/guide/flows_authcode/
+
+        :returns: Redirected HTTP response
+        """
+
+        return self.post(
+            url='https://api.login.yahoo.com/oauth2/request_auth',
+            data=dict(
+                client_id=self.client_id,
+                redirect_uri='oob',
+                response_type='code'
+            )
+        )
+
+    def request_authentication(self) -> str:
+        """
+        Authorization Code Flow for Server-side Apps
+
+        Step 3: User redirected for access authorization
+        https://developer.yahoo.com/oauth2/guide/flows_authcode/#step-3-user-redirected-for-access-authorization
+        A successful response to request_auth initiates a 302 redirect to Yahoo where the user can
+        authorize access.
+
+        :return: Authorization URL
+        """
+        response = self._request_authentication()
+
+        # Show redirection history
+        for redirect_response in response.history:
+            LOGGER.info(redirect_response.url)
+
+        return response.url
+
+    def authenticate(self) -> dict:
         """
         Exchange refresh token for new access token
 
         Authentication via authorization code grant
         Explicit grant flow: https://developer.yahoo.com/oauth2/guide/flows_authcode/
 
-        I have already followed the first few steps (to step 4) to generate a refresh token.
+        You must follow the first few steps (to step 4) to generate a refresh token.
         Attempt to connect using existing access token or refresh it if it's expired.
 
         https://developer.yahoo.com/oauth2/guide/flows_authcode/#step-5-exchange-refresh-token-for-new-access-token
@@ -103,19 +148,9 @@ class GeminiSession(requests.Session):
         )
         data = response.json()
 
-        token = data.pop('access_token')
         data['expires_in'] = datetime.timedelta(seconds=int(data['expires_in']))
 
-        # Debugging info
-        for key, value in data.items():
-
-            # Obfuscate
-            if key == 'refresh_token':
-                value = '***********************'
-
-            LOGGER.debug("REFRESH %s: %s", key, value)
-
-        return token
+        return data
 
     def build_url(self, endpoint: str) -> str:
         """Build the URI for the specified endpoint"""
@@ -125,7 +160,7 @@ class GeminiSession(requests.Session):
         """Wrapper for requests methods, implement error handling"""
 
         # Make HTTP request
-        response = super().request(*args, **kwargs)
+        response = super().request(*args, verify=False, **kwargs)
 
         # Log HTTP headers
         if LOGGER.getEffectiveLevel() <= logging.DEBUG:

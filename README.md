@@ -1,8 +1,7 @@
 # Yahoo Gemini Tap
 
 This is a [Singer](https://singer.io) tap that produces JSON-formatted data
-following the [Singer
-spec](https://github.com/singer-io/getting-started/blob/master/SPEC.md).
+following the [Singer spec](https://github.com/singer-io/getting-started/blob/master/SPEC.md).
 
 This tap:
 
@@ -16,7 +15,7 @@ This tap:
 
 ### Requirements
 
-To set up [tap_name] in Stitch, you need:
+To set up `tap-gemini` in Stitch, you need:
 
 _For each requirement:_
 -  **The requirement**. Brief explanation of the requirement. Include links to if relevant.

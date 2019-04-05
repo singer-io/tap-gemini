@@ -10,7 +10,7 @@ import csv
 
 import singer
 
-LOGGER = logging.getLevelName(__name__)
+LOGGER = logging.getLogger(__name__)
 
 YAHOO_REPORT_ENDPOINT = 'reports/custom'
 
@@ -38,16 +38,16 @@ def build_report_definition(config: dict, state: dict, stream: dict, start_date:
         https://developer.yahoo.com/nativeandsearch/guide/reporting/
     """
 
-    LOGGER.debug(state)
+    LOGGER.info(state)
 
-    field_names = stream['schema']['properties'].keys()
+    field_names = stream.schema['properties'].keys()
     advertiser_ids = config['advertiser_ids']
 
     # Ensure we're using dates rather than date-times
     start_date, end_date = map(build_date, (start_date, end_date))
 
     return dict(
-        cube=stream['stream'],
+        cube=stream.stream,
         fields=[
             dict(field=field_name) for field_name in field_names
         ],
