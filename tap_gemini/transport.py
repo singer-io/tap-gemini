@@ -3,7 +3,7 @@
 Yahoo Gemini API transport layer via a HTTP session
 """
 
-import configparser
+import json
 import logging
 import argparse
 import datetime
@@ -15,7 +15,7 @@ import requests
 
 LOGGER = logging.getLogger(__name__)
 
-CONFIG_FILE = 'yahoo.ini'
+CONFIG_FILE = 'yahoo.json'
 
 
 class GeminiSession(requests.Session):
@@ -33,7 +33,10 @@ class GeminiSession(requests.Session):
 
         self._access_token = access_token
 
-        self.api_version = self.config['API']['api_version']
+        self.api_version = int(self.config['API']['api_version'])
+
+        with open('yahoo.json', 'w') as file:
+            json.dump(dict(self.config['API']), file, indent=2)
 
         self.client_id = client_id
 
@@ -270,12 +273,12 @@ def debug():
     print(data)
 
 
-def load_config() -> configparser.ConfigParser:
+def load_config() -> dict:
     """Load API configuration file"""
 
-    config = configparser.ConfigParser()
-
-    config.read(CONFIG_FILE)
+    with open(CONFIG_FILE) as file:
+        config = json.load(file)
+        LOGGER.debug('Loaded "{}"'.format(file.name))
 
     return config
 

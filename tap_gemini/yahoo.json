@@ -1,0 +1,7 @@
+{
+  "api_version": 3,
+  "base_url_format": "https://api.gemini.yahoo.com/v{}/rest/",
+  "sandbox_url_format": "https://sandbox-api.gemini.yahoo.com/v{}/rest/",
+  "authorization_url": "https://api.login.yahoo.com/oauth2/request_auth",
+  "authentication_url": "https://api.login.yahoo.com/oauth2/get_token"
+}
