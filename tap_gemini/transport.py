@@ -3,50 +3,51 @@
 Yahoo Gemini API transport layer via a HTTP session
 """
 
-import json
-import logging
 import argparse
 import datetime
 import getpass
 import http
+import json
+import logging
 import urllib.parse
 
 import requests
 
 LOGGER = logging.getLogger(__name__)
 
-CONFIG_FILE = 'yahoo.json'
+BASE_URL_FORMAT = "https://api.gemini.yahoo.com/v{}/rest/"
+SANDBOX_URL_FORMAT = "https://sandbox-api.gemini.yahoo.com/v{}/rest/"
+AUTHORIZATION_URL = "https://api.login.yahoo.com/oauth2/request_auth"
+AUTHENTICATION_URL = "https://api.login.yahoo.com/oauth2/get_token"
 
 
 class GeminiSession(requests.Session):
     """Yahoo Gemini HTTP API Session"""
 
     def __init__(self, client_id: str, access_token: str = None, user_agent: str = None,
-                 sandbox: bool = False):
-
-        config = load_config()
-
-        self.config = config
+                 sandbox: bool = False, api_version: int = 3, session_options: dict = None):
 
         # Initialise HTTP session
         super().__init__()
 
-        self._access_token = access_token
+        # Configure advanced HTTP options
+        session_options = session_options or dict()
+        for key, value in session_options.items():
+            setattr(self, key, value)
 
-        self.api_version = int(self.config['API']['api_version'])
-
-        with open('yahoo.json', 'w') as file:
-            json.dump(dict(self.config['API']), file, indent=2)
-
+        # Configure API access
+        self.api_version = api_version
         self.client_id = client_id
 
         # Build API base URL
         if sandbox:
-            base_url_format = self.config['API']['base_url_format']
+            base_url_format = SANDBOX_URL_FORMAT
         else:
-            base_url_format = self.config['API']['sandbox_url_format']
-
+            base_url_format = BASE_URL_FORMAT
         self.base_url = base_url_format.format(self.api_version)
+
+        # Authenticate
+        self.access_token = access_token
 
         # Update HTTP headers
         self.headers.update(self.headers_extra)
@@ -112,7 +113,7 @@ class GeminiSession(requests.Session):
         """
 
         return self.post(
-            url=self.config['API']['authorization_url'],
+            url=AUTHORIZATION_URL,
             data=dict(
                 client_id=self.client_id,
                 redirect_uri='oob',
@@ -152,7 +153,7 @@ class GeminiSession(requests.Session):
         :returns: Authentication meta-data
         """
         post_params = dict(
-            url=self.config['API']['authentication_url'],
+            url=AUTHENTICATION_URL,
             data=dict(
                 client_id=self.client_id,
                 client_secret=self.client_secret,
@@ -259,28 +260,27 @@ def debug_url(url: str):
     print(response.text)
 
 
+def sandbox_signup():
+    url = 'http://sandbox-api.gemini.yahoo.com/v2/rest/advertisersignup'
+    debug_url(url)
+    raise NotImplementedError()
+
+
 def debug():
     """Test API connection"""
 
+    with open('config.json') as file:
+        config = json.load(file)
+        LOGGER.info('Loaded "{}"'.format(file.name))
+
     # Authenticate
     session = GeminiSession(
-        client_id=input('Client ID:'),
-        access_token=getpass.getpass('Access token (leave blank to authenticate):')
+        client_id=config['username'],
+        access_token=config['password'],
+        session_options=config['session'],
     )
 
-    data = session.call(endpoint='')
-
-    print(data)
-
-
-def load_config() -> dict:
-    """Load API configuration file"""
-
-    with open(CONFIG_FILE) as file:
-        config = json.load(file)
-        LOGGER.debug('Loaded "{}"'.format(file.name))
-
-    return config
+    LOGGER.info(session)
 
 
 def main():
