@@ -3,7 +3,9 @@
 Yahoo Gemini API transport layer via a HTTP session
 """
 
+import configparser
 import logging
+import argparse
 import datetime
 import getpass
 import http
@@ -13,22 +15,35 @@ import requests
 
 LOGGER = logging.getLogger(__name__)
 
-BASE_URL_FORMAT = "https://api.gemini.yahoo.com/v{}/rest/"
+CONFIG_FILE = 'yahoo.ini'
 
 
 class GeminiSession(requests.Session):
     """Yahoo Gemini HTTP API Session"""
 
-    def __init__(self, client_id: str, api_version: int = 3, access_token: str = None,
-                 user_agent: str = None):
+    def __init__(self, client_id: str, access_token: str = None, user_agent: str = None,
+                 sandbox: bool = False):
+
+        config = load_config()
+
+        self.config = config
 
         # Initialise HTTP session
         super().__init__()
 
         self._access_token = access_token
 
+        self.api_version = self.config['API']['api_version']
+
         self.client_id = client_id
-        self.base_url = BASE_URL_FORMAT.format(api_version)
+
+        # Build API base URL
+        if sandbox:
+            base_url_format = self.config['API']['base_url_format']
+        else:
+            base_url_format = self.config['API']['sandbox_url_format']
+
+        self.base_url = base_url_format.format(self.api_version)
 
         # Update HTTP headers
         self.headers.update(self.headers_extra)
@@ -94,7 +109,7 @@ class GeminiSession(requests.Session):
         """
 
         return self.post(
-            url='https://api.login.yahoo.com/oauth2/request_auth',
+            url=self.config['API']['authorization_url'],
             data=dict(
                 client_id=self.client_id,
                 redirect_uri='oob',
@@ -107,7 +122,7 @@ class GeminiSession(requests.Session):
         Authorization Code Flow for Server-side Apps
 
         Step 3: User redirected for access authorization
-        https://developer.yahoo.com/oauth2/guide/flows_authcode/#step-3-user-redirected-for-access-authorization
+        https://developer.yahoo.com/oauth2/guide/flows_authcode
         A successful response to request_auth initiates a 302 redirect to Yahoo where the user can
         authorize access.
 
@@ -125,29 +140,31 @@ class GeminiSession(requests.Session):
         """
         Exchange refresh token for new access token
 
-        Authentication via authorization code grant
-        Explicit grant flow: https://developer.yahoo.com/oauth2/guide/flows_authcode/
+        Authentication via authorization code grant. Explicit grant flow step 5:
+        https://developer.yahoo.com/oauth2/guide/flows_authcode/
 
         You must follow the first few steps (to step 4) to generate a refresh token.
         Attempt to connect using existing access token or refresh it if it's expired.
 
-        https://developer.yahoo.com/oauth2/guide/flows_authcode/#step-5-exchange-refresh-token-for-new-access-token
-
         :returns: Authentication meta-data
         """
-        response = self.post(
-            url='https://api.login.yahoo.com/oauth2/get_token',
+        post_params = dict(
+            url=self.config['API']['authentication_url'],
             data=dict(
                 client_id=self.client_id,
                 client_secret=self.client_secret,
                 refresh_token=self.refresh_token,
                 grant_type='refresh_token',
-                redirect_uri='oob',  # no redirect URL (server-side authentication)
+                # No redirect URL (server-side authentication)
+                redirect_uri='oob',
             ),
             auth=False
         )
+        print(post_params)
+        response = self.post(**post_params)
         data = response.json()
 
+        # Parse seconds
         data['expires_in'] = datetime.timedelta(seconds=int(data['expires_in']))
 
         return data
@@ -160,19 +177,18 @@ class GeminiSession(requests.Session):
         """Wrapper for requests methods, implement error handling"""
 
         # Make HTTP request
-        response = super().request(*args, verify=False, **kwargs)
+        response = super().request(*args, **kwargs)
 
         # Log HTTP headers
-        if LOGGER.getEffectiveLevel() <= logging.DEBUG:
-            for header, value in response.request.headers.items():
+        for header, value in response.request.headers.items():
 
-                # Obfuscate sensitive info
-                if header == 'Authorization':
-                    value = '************************'
+            # Obfuscate sensitive info
+            if header == 'Authorization':
+                value = '************************'
 
-                LOGGER.debug("REQUEST %s: %s", header, value)
-            for header, value in response.headers.items():
-                LOGGER.debug("RESPONSE %s: %s", header, value)
+            LOGGER.debug("REQUEST %s: %s", header, value)
+        for header, value in response.headers.items():
+            LOGGER.debug("RESPONSE %s: %s", header, value)
 
         try:
             response.raise_for_status()
@@ -224,3 +240,59 @@ class GeminiSession(requests.Session):
             raise RuntimeError(errors)
 
         return api_response
+
+
+def debug_url(url: str):
+    """Retrieve a URL via HTTP"""
+    response = requests.get(url=url)
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as http_error:
+        LOGGER.error(http_error)
+        LOGGER.error(http_error.response.text)
+        for arg in http_error.args:
+            LOGGER.error(arg)
+        raise
+    print(response.text)
+
+
+def debug():
+    """Test API connection"""
+
+    # Authenticate
+    session = GeminiSession(
+        client_id=input('Client ID:'),
+        access_token=getpass.getpass('Access token (leave blank to authenticate):')
+    )
+
+    data = session.call(endpoint='')
+
+    print(data)
+
+
+def load_config() -> configparser.ConfigParser:
+    """Load API configuration file"""
+
+    config = configparser.ConfigParser()
+
+    config.read(CONFIG_FILE)
+
+    return config
+
+
+def main():
+    logging.basicConfig(level=logging.DEBUG)
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--debug', action='store_true', help="Debug API connection")
+
+    args = parser.parse_args()
+
+    if args.debug:
+        debug()
+    else:
+        parser.print_help()
+
+
+if __name__ == '__main__':
+    main()

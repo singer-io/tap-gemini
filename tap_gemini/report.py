@@ -24,17 +24,17 @@ def build_date(timestamp: datetime.datetime) -> datetime.date:
     )
 
 
-def build_report_definition(config: dict, state: dict, stream: dict, start_date: datetime.date,
+def build_report_definition(config, state, stream, start_date: datetime.date,
                             end_date: datetime.date) -> dict:
     """
     Convert a JSON schema to a Gemini report request
-
+    
     JSON schema:
-
+    
         http://json-schema.org/
-
+    
     Gemini: Working with cubes:
-
+    
         https://developer.yahoo.com/nativeandsearch/guide/reporting/
     """
 
@@ -46,6 +46,7 @@ def build_report_definition(config: dict, state: dict, stream: dict, start_date:
     # Ensure we're using dates rather than date-times
     start_date, end_date = map(build_date, (start_date, end_date))
 
+    # Build report definition
     return dict(
         cube=stream.stream,
         fields=[

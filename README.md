@@ -49,3 +49,9 @@ For **each** table that the tap produces, provide the following:
 ## Troubleshooting / Other Important Info
 
 Anything else users should know about using this tap? For example: `some_column` is a Unix timestamp.
+
+One can debug the API HTTP connection by running the following command:
+
+```bash
+python tap_gemini\transport.py --debug
+```
