@@ -5,13 +5,14 @@ Yahoo Gemini API transport layer via a HTTP session
 
 import argparse
 import datetime
-import getpass
 import http
 import json
 import logging
 import urllib.parse
 
 import requests
+
+import singer
 
 LOGGER = logging.getLogger(__name__)
 
@@ -24,8 +25,9 @@ AUTHENTICATION_URL = "https://api.login.yahoo.com/oauth2/get_token"
 class GeminiSession(requests.Session):
     """Yahoo Gemini HTTP API Session"""
 
-    def __init__(self, client_id: str, access_token: str = None, user_agent: str = None,
-                 sandbox: bool = False, api_version: int = 3, session_options: dict = None):
+    def __init__(self, client_id: str, client_secret: str, refresh_token: str,
+                 access_token: str = None, user_agent: str = None, sandbox: bool = False,
+                 api_version: int = 3, session_options: dict = None):
 
         # Initialise HTTP session
         super().__init__()
@@ -37,7 +39,6 @@ class GeminiSession(requests.Session):
 
         # Configure API access
         self.api_version = api_version
-        self.client_id = client_id
 
         # Build API base URL
         if sandbox:
@@ -46,7 +47,10 @@ class GeminiSession(requests.Session):
             base_url_format = BASE_URL_FORMAT
         self.base_url = base_url_format.format(self.api_version)
 
-        # Authenticate
+        # Credentials
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.refresh_token = refresh_token
         self.access_token = access_token
 
         # Update HTTP headers
@@ -86,22 +90,6 @@ class GeminiSession(requests.Session):
         """Access token setter"""
         self._access_token = new_token
 
-    @property
-    def client_secret(self) -> str:
-        """OAuth Client secret"""
-        return getpass.getpass('Client secret:')
-
-    @property
-    def refresh_token(self) -> str:
-        """OAuth refresh token"""
-        token = getpass.getpass('Refresh token:')
-
-        if not token:
-            self.request_authentication()
-            raise NotImplementedError()
-
-        return token
-
     def _request_authentication(self) -> requests.Response:
         """
         Authorization Code Flow for Server-side Apps
@@ -136,7 +124,7 @@ class GeminiSession(requests.Session):
 
         # Show redirection history
         for redirect_response in response.history:
-            LOGGER.info(redirect_response.url)
+            LOGGER.info("REDIRECT: %s", redirect_response.url)
 
         return response.url
 
@@ -152,7 +140,7 @@ class GeminiSession(requests.Session):
 
         :returns: Authentication meta-data
         """
-        post_params = dict(
+        params = dict(
             url=AUTHENTICATION_URL,
             data=dict(
                 client_id=self.client_id,
@@ -164,8 +152,7 @@ class GeminiSession(requests.Session):
             ),
             auth=False
         )
-        print(post_params)
-        response = self.post(**post_params)
+        response = self.post(**params)
         data = response.json()
 
         # Parse seconds
@@ -177,13 +164,9 @@ class GeminiSession(requests.Session):
         """Build the URI for the specified endpoint"""
         return urllib.parse.urljoin(self.base_url, endpoint)
 
-    def request(self, *args, **kwargs) -> requests.Response:
-        """Wrapper for requests methods, implement error handling"""
-
-        # Make HTTP request
-        response = super().request(*args, **kwargs)
-
-        # Log HTTP headers
+    @staticmethod
+    def log_response_headers(response: requests.Response):
+        """Log HTTP headers"""
         for header, value in response.request.headers.items():
 
             # Obfuscate sensitive info
@@ -194,42 +177,73 @@ class GeminiSession(requests.Session):
         for header, value in response.headers.items():
             LOGGER.debug("RESPONSE %s: %s", header, value)
 
+    @staticmethod
+    def log_response_errors(response: requests.Response):
+
+        # Parse response
+        data = response.json()
+        errors = data.pop('errors', dict())
+
+        # Log error messages
+        for key, value in data.items():
+            LOGGER.error("%s: %s", key, value)
+
+        for error in errors:
+            for key, value in error.items():
+                LOGGER.error("%s: %s", key, value)
+
+    def request(self, *args, **kwargs) -> requests.Response:
+        """Wrapper for requests methods, implement error handling"""
+
+        # Make HTTP request
+        response = super().request(*args, **kwargs)
+        self.log_response_headers(response)
+
         try:
             response.raise_for_status()
 
         # Handle HTTP errors
+        # See: https://developer.yahoo.com/nativeandsearch/guide/v1-api/error-responses.html
         except requests.HTTPError as http_error:
-            response = http_error.response
 
             # Clear authentication info
             if response.status_code == http.HTTPStatus.UNAUTHORIZED:
                 del self.access_token
-                raise
 
-            # Parse response
-            data = response.json()
+            # Log errors
+            response = http_error.response
+            self.log_response_errors(response)
 
-            # Log error messages
-            for key, value in data.items():
-                LOGGER.error("%s: %s", key, value)
-
-            for error in data.get('errors', dict()):
-                for key, value in error.items():
-                    LOGGER.error("%s: %s", key, value)
+            # Raise client errors
+            if response.status_code == http.HTTPStatus.BAD_REQUEST:
+                raise RuntimeError(*response.json()['errors']) from http_error
 
             raise
 
         return response
 
-    def call(self, endpoint: str, **kwargs) -> dict:
-        """Make a call to an API endpoint and return response data"""
+    def call(self, method: str = 'get', endpoint: str = '', **kwargs):
+        """
+        Make a call to an API endpoint and return response data
+
+        :rtype: May return a dictionary or a list
+        :returns: Endpoint response
+        """
 
         url = kwargs.get('url', self.build_url(endpoint=endpoint))
 
-        LOGGER.info(url)
-
-        # Retrieve HTTP response
-        response = self.get(url=url, **kwargs)
+        # Singer HTTP response timer
+        tags = dict(  # meta-data
+            url=url,
+            method=method,
+            endpoint=endpoint,
+            params=kwargs.get('params'),
+            json=kwargs.get('json'),
+            data=kwargs.get('data')
+        )
+        with singer.metrics.Timer(metric='http_request_timer', tags=tags):
+            # Retrieve HTTP response
+            response = self.request(method=method, url=url, **kwargs)
 
         data = response.json()
 
@@ -245,19 +259,33 @@ class GeminiSession(requests.Session):
 
         return api_response
 
+    def list_advertisers(self) -> list:
+        """https://developer.yahoo.com/nativeandsearch/guide/advertiser.html"""
+        return self.call(endpoint='advertiser', params=dict(mr=500))
+
+    def get_data_dictionary(self) -> list:
+        """https://developer.yahoo.com/nativeandsearch/guide/resources/data-dictionary/"""
+        return self.call(endpoint='dictionary')
+
 
 def debug_url(url: str):
     """Retrieve a URL via HTTP"""
     response = requests.get(url=url)
+
     try:
         response.raise_for_status()
+
+    # Log error message
     except requests.HTTPError as http_error:
         LOGGER.error(http_error)
         LOGGER.error(http_error.response.text)
         for arg in http_error.args:
             LOGGER.error(arg)
         raise
+
     print(response.text)
+
+    return response
 
 
 def sandbox_signup():

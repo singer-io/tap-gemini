@@ -3,25 +3,17 @@
 Yahoo Gemini API reporting
 """
 
-import logging
-import datetime
-import time
 import csv
+import datetime
+import logging
+import time
 
 import singer
 
 LOGGER = logging.getLogger(__name__)
 
 YAHOO_REPORT_ENDPOINT = 'reports/custom'
-
-
-def build_date(timestamp: datetime.datetime) -> datetime.date:
-    """Create a native Python date object using duck-typing"""
-    return datetime.date(
-        year=timestamp.year,
-        month=timestamp.month,
-        day=timestamp.day,
-    )
+DATE_FORMAT = '%Y-%m-%d'
 
 
 def build_report_definition(config, state, stream, start_date: datetime.date,
@@ -38,13 +30,15 @@ def build_report_definition(config, state, stream, start_date: datetime.date,
         https://developer.yahoo.com/nativeandsearch/guide/reporting/
     """
 
-    LOGGER.info(state)
+    # TODO implement state
+    # LOGGER.debug("STATE: %s", state)
 
     field_names = stream.schema['properties'].keys()
     advertiser_ids = config['advertiser_ids']
 
-    # Ensure we're using dates rather than date-times
-    start_date, end_date = map(build_date, (start_date, end_date))
+    # Use ISO formatting
+    start_date = start_date.strftime(DATE_FORMAT)
+    end_date = end_date.strftime(DATE_FORMAT)
 
     # Build report definition
     return dict(
@@ -55,20 +49,11 @@ def build_report_definition(config, state, stream, start_date: datetime.date,
         filters=[
             # Mandatory filters
 
-            # Time range
-            {
-                'field': 'Day',
-                'from': start_date.isoformat(),
-                'operator': 'between',
-                'to': end_date.isoformat()
-            },
+            # Accounts
+            {'field': 'Advertiser ID', 'operator': 'IN', 'values': advertiser_ids},
 
-            # Account IDS
-            {
-                'field': 'Advertiser ID',
-                'operator': 'IN',
-                'values': advertiser_ids
-            },
+            # Time range
+            {'field': 'Day', 'from': start_date, 'operator': 'between', 'to': end_date}
         ]
     )
 
@@ -76,7 +61,7 @@ def build_report_definition(config, state, stream, start_date: datetime.date,
 class GeminiReport:
     """Yahoo Gemini Report"""
 
-    def __init__(self, session, report_definition: dict, poll_interval: float = 0.5):
+    def __init__(self, session, report_definition: dict, poll_interval: float = 1.):
         self.report_definition = report_definition
         self.session = session
         self.poll_interval = poll_interval
@@ -91,6 +76,7 @@ class GeminiReport:
         """
 
         data = self.session.call(
+            method='post',
             endpoint=YAHOO_REPORT_ENDPOINT,
             json=self.report_definition
         )
@@ -105,7 +91,7 @@ class GeminiReport:
 
         return job_id
 
-    def poll(self) -> str:
+    def poll(self, job_id: str = None) -> str:
         """
         Poll reporting server for a report download URL
 
@@ -114,44 +100,53 @@ class GeminiReport:
         :returns: URL of the report data to download
         """
 
-        if not self.job_id:
-            self.submit()
+        if job_id is None:
+            if self.job_id:
+                job_id = self.job_id
+            else:
+                job_id = self.submit()
 
-        endpoint = "{}/{}".format(YAHOO_REPORT_ENDPOINT, self.job_id)
+        endpoint = "{}/{}".format(YAHOO_REPORT_ENDPOINT, job_id)
 
         # Repeatedly poll the reporting server until the data is ready to download
+        n_attempts = 0
         while True:
+            n_attempts += 1
+            LOGGER.info('JOB ID: %s POLL Attempt #%s', job_id, n_attempts)
 
-            response = self.session.call(endpoint=endpoint,
-                                         params={'advertiserId': self.advertiser_id})
+            response = self.session.call(
+                endpoint=endpoint,
+                params={'advertiserId': self.advertiser_id}
+            )
 
-            # Check if the report is ready
-            if response['status'] == 'completed':
-                # If the report is ready then a download URL is given:
+            # Check the report status
+            status = response['status']
+
+            # If the report is ready then a download URL is given:
+            if status == 'completed':
                 download_url = response['jobResponse']
                 break
-            elif response['status'] == 'submitted':
-                # The job is in queue but work on it has yet to commence.
+
+            # The job is in queue but work on it has yet to commence.
+            elif status == 'submitted':
                 time.sleep(self.poll_interval * 3)
-            elif response['status'] == 'running':
-                # Short time delay before polling again
+
+            # Short time delay before polling again
+            elif status == 'running':
                 time.sleep(self.poll_interval)
+
             else:
                 LOGGER.error('Unknown server response: %s', response)
                 raise ValueError(response)
-
-        LOGGER.debug(download_url)
 
         self.download_url = download_url
 
         return download_url
 
-    def stream(self) -> iter:
+    def _stream(self) -> iter:
         """"
         Stream data rows from a CSV file, yielding an iterator with one dictionary per data row.
         """
-
-        start_time = time.time()
 
         if not self.download_url:
             self.poll()
@@ -163,34 +158,20 @@ class GeminiReport:
         # Parse CSV format
 
         # Get headers by parsing first row
-        with csv.reader(data) as reader:
-            headers = next(reader)
+        reader = csv.reader(data)
+        headers = next(reader)  # list
 
-        for string in headers:
-            LOGGER.debug("HEADER: %s", string)
+        # Yield data rows from the CSV stream
+        yield from csv.DictReader(data, fieldnames=headers)
 
-        # Yield rows (and count the total number of rows)
-        n_rows = 0
-        for row in csv.DictReader(data, fieldnames=headers):
-            n_rows += 1
-            yield row
+    def stream(self) -> iter:
+        """Wrapper for data streaming function to implement Singer metrics"""
 
-        # Write metric messages
-        message = dict(
-            type='counter',
-            metric='record_count',
-            value=n_rows,
-            tags=self.tags
-        )
-        singer.write_message(message=message)
-
-        message = dict(
-            type='timer',
-            metric='report_download_duration',
-            value=time.time() - start_time,
-            tags=self.tags
-        )
-        singer.write_message(message=message)
+        # Generate data and count rows
+        with singer.metrics.Counter(metric='record_count', tags=self.tags) as counter:
+            for row in self._stream():
+                counter.increment()
+                yield row
 
     @property
     def advertiser_id(self) -> int:
@@ -228,22 +209,12 @@ class GeminiReport:
         https://developer.yahoo.com/nativeandsearch/guide/reporting/
         """
 
-        start_time = time.time()
-
         # Stream data rows
-        yield from self.stream()
-
-        # Metric message for entire report duration, including submission and polling
-        message = dict(
-            type='timer',
-            metric='report_duration',
-            value=time.time() - start_time,
-            tags=self.tags
-        )
-        singer.write_message(message=message)
+        with singer.metrics.Timer(metric='job_timer', tags=self.tags):
+            yield from self.stream()
 
         # Save state on success
-        singer.write_state(value=dict(end_date=self.end_date))
+        singer.write_state(value=self.end_date)
 
     @property
     def tags(self) -> dict:

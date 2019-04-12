@@ -1,0 +1,12 @@
+{
+  "start_date": "2018-01-01T00:00:00+00:00",
+  "user_agent": "Singer.io Yahoo Gemini Tap (person@place.com)",
+  "username": "CLIENT ID",
+  "password": "CLIENT SECRET",
+  "refresh_token": "REFRESH TOKEN",
+  "api_version": 3,
+  "sandbox": false,
+  "advertiser_ids": [],
+  "poll_interval": 1,
+  "session": {}
+}

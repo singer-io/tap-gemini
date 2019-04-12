@@ -24,6 +24,12 @@ _For each requirement:_
 
 The steps necessary to set up the tap, including instructions for obtaining API credentials, configuring account settings, granting user permissions, etc. if necessary.
 
+### Usage
+
+```bash
+python .
+```
+
 ## Replication
 
 If pertinent, include details about how the tap replicates data and/or uses the API. As Stitch users are billed for total rows replicated, any info that can shed light on the number of rows replicated or reduce usage is considered necessary.

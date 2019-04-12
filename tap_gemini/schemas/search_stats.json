@@ -1,0 +1,79 @@
+{
+  "type": [
+    "integer",
+    "float",
+    "string"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "Advertiser ID": {
+      "type": "integer"
+    },
+    "Campaign ID": {
+      "type": "integer"
+    },
+    "Ad Group ID": {
+      "type": "integer"
+    },
+    "Ad ID": {
+      "type": "integer"
+    },
+    "Keyword ID": {
+      "type": "integer"
+    },
+    "Delivered Match Type": {
+      "type": "string"
+    },
+    "Search Term": {
+      "type": "string"
+    },
+    "Device Type": {
+      "type": "string"
+    },
+    "Destination URL": {
+      "type": "string"
+    },
+    "Day": {
+      "type": "date"
+    },
+    "Impressions": {
+      "type": "integer"
+    },
+    "Clicks": {
+      "type": "integer"
+    },
+    "Spend": {
+      "type": "float"
+    },
+    "Conversions": {
+      "type": "integer"
+    },
+    "Post Click Conversions": {
+      "type": "integer"
+    },
+    "Post Impression Conversions": {
+      "type": "integer"
+    },
+    "Average Position": {
+      "type": "integer"
+    },
+    "Max Bid": {
+      "type": "float"
+    },
+    "Average CPC": {
+      "type": "float"
+    },
+    "CTR": {
+      "type": "float"
+    },
+    "Impression Share": {
+      "type": "float"
+    },
+    "Click Share": {
+      "type": "float"
+    },
+    "Conversion Share": {
+      "type": "float"
+    }
+  }
+}

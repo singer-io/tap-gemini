@@ -163,8 +163,10 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
         session = tap_gemini.transport.GeminiSession(
             client_id=config['username'],
             api_version=config['api_version'],
-            access_token=config['password'],
-            user_agent=config['user_agent']
+            client_secret=config['password'],
+            refresh_token=config['refresh_token'],
+            user_agent=config['user_agent'],
+            session_options=config['session']
         )
 
         gemini_report = tap_gemini.report.GeminiReport(
