@@ -20,15 +20,21 @@ import os
 import singer.metrics
 import singer.utils
 import singer.metadata
+import singer.transform
 
 import transport
 import report
 import api
 
-__version__ = '0.0.1'
+__version__ = '0.0.2'
 
-REQUIRED_CONFIG_KEYS = ["start_date", "username", "password"]
 LOGGER = singer.get_logger()
+
+REQUIRED_CONFIG_KEYS = [
+    "start_date",
+    "username",
+    "password"
+]
 
 # Schema config
 SCHEMAS_DIR = 'schemas'
@@ -49,13 +55,17 @@ MAX_WINDOW_DAYS = dict(
     search_stats=15,
     performance_stats=15,
     keyword_stats=400,
+    product_ads=400,
+    site_performance_stats=400,
 )
 
 # Maximum number of days to go back in time
-# ERROR_CODE:10002 Max look back window exceeded expected
+# This prevents ERROR_CODE:10002 Max look back window exceeded expected
 MAX_LOOK_BACK_DAYS = dict(
     performance_stats=15,
     keyword_stats=750,
+    product_ads=400,
+    site_performance_stats=400,
 )
 
 
@@ -84,7 +94,7 @@ def load_directory(dir_path: str) -> dict:
                 singer.log_error('JSON syntax error in file "%s"', file.name)
                 raise
 
-            LOGGER.debug('Loaded "%s"', file.name)
+            singer.log_debug('Loaded "%s"', file.name)
 
     return schemas
 
@@ -111,17 +121,6 @@ def load_key_properties() -> dict:
     """Load key properties from config files"""
 
     return load_directory(KEY_PROPERTIES_DIR)
-
-
-def object_to_json(data: dict) -> dict:
-    """Make a dictionary JSON serialisable"""
-
-    for key, value in data.items():
-        # Convert timestamps to string for JSON output
-        if isinstance(value, (datetime.date, datetime.datetime)):
-            data[key] = singer.utils.strftime(value)
-
-    return data
 
 
 def generate_time_windows(start: datetime.date, size: int, end: datetime.date = None) -> iter:
@@ -241,7 +240,8 @@ def filter_schema(schema: dict, metadata: list) -> dict:
                 # Remove if not selected
                 if not selected or (inclusion == 'unsupported'):
                     del schema.properties[property_name]
-                    LOGGER.info('Removed property "%s"', property_name)
+
+                    singer.log_debug('Removed property "%s"', property_name)
 
         except IndexError:
             pass
@@ -268,7 +268,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
     selected_stream_ids = get_selected_streams(catalog)
 
     if not selected_stream_ids:
-        LOGGER.warning('No streams selected')
+        singer.log_warning('No streams selected')
 
     # Loop over streams in catalog
     for stream in catalog.streams:
@@ -279,7 +279,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
         if stream_id not in selected_stream_ids:
             continue
 
-        LOGGER.info('Syncing stream:%s', stream_id)
+        singer.log_info('Syncing stream:%s', stream_id)
 
         filter_schema(stream.schema, stream.metadata)
 
@@ -305,10 +305,13 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
             model = OBJECT_MAP[stream_id]
 
             # Write records
-            for obj in model.list(session=session):
+            for data in model.list(session=session):
+                record = singer.transform(data=data, schema=stream.schema,
+                                          metadata=stream.metadata)
+
                 singer.write_record(
                     stream_name=stream_id,
-                    record=object_to_json(obj.to_dict()),
+                    record=record,
                     time_extracted=time_extracted
                 )
 
@@ -320,8 +323,8 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
             try:
                 days = MAX_LOOK_BACK_DAYS[stream_id]
                 start_date = max(start_date, datetime.date.today() - datetime.timedelta(days=days))
-                LOGGER.warning("%s enforced maximum look back of %s days, start date set to %s",
-                               stream_id, days, start_date)
+                singer.log_warning("%s enforced maximum look back of %s days, start date set to %s",
+                                   stream_id, days, start_date)
             except KeyError:
                 pass
 
@@ -358,13 +361,15 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                 with singer.metrics.Timer(metric='job_timer', tags=rep.tags):
                     # Generate data and count rows
                     with singer.metrics.Counter(metric='record_count', tags=rep.tags) as counter:
-                        for row in rep.stream():
-                            counter.increment()
+                        for data in rep.stream():
+                            record = singer.transform(data=data, schema=stream.schema,
+                                                      metadata=stream.metadata)
                             singer.write_record(
                                 stream_name=stream_id,
-                                record=object_to_json(row),
+                                record=record,
                                 time_extracted=time_extracted
                             )
+                            counter.increment()
 
                 # Save state on success
                 singer.write_state(value=rep.end_date)

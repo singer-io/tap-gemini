@@ -113,7 +113,7 @@ class GeminiReport:
             n_attempts += 1
 
             # Time delay (minimum one second)
-            secs = (max(1.0, self.poll_interval) + 0.1) ** n_attempts
+            secs = (max(1.0, self.poll_interval) + 0.5) ** n_attempts
 
             response = self.session.call(
                 endpoint=endpoint,

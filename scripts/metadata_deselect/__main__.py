@@ -9,6 +9,7 @@ import json
 PATH = "C:\\Users\\joe.heffer\\Documents\Python\\tap-gemini\\tap_gemini\\metadata"
 DIR = 'metadata'
 INDENT = 2
+SELECTED = False
 
 
 def main():
@@ -24,7 +25,7 @@ def main():
         # Set 'selected' to false on the main item
         for i, item in enumerate(metadata):
             if not item['breadcrumb']:
-                item['metadata']['selected'] = False
+                item['metadata']['selected'] = SELECTED
                 metadata[i] = item
 
         output_path = os.path.join(DIR, filename)
