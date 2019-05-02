@@ -20,8 +20,9 @@ import os
 import singer.metadata
 import singer.utils
 
-import tap_gemini.report
-import tap_gemini.transport
+import transport
+import report
+import api
 
 __version__ = '0.0.1'
 
@@ -32,6 +33,29 @@ LOGGER = singer.get_logger()
 SCHEMAS_DIR = 'schemas'
 METADATA_DIR = 'metadata'
 KEY_PROPERTIES_DIR = 'key_properties'
+
+# Map schema name to API object
+OBJECT_MAP = dict(
+    advertiser=api.Advertiser,
+    campaign=api.Campaign,
+    # TODO Implement further objects
+    # adgroup=api.AdGroup
+)
+
+# Time windowing for running reports in chunks
+# This prevents ERROR_CODE:10001 Max days window exceeded expected
+MAX_WINDOW_DAYS = dict(
+    search_stats=15,
+    performance_stats=15,
+    keyword_stats=400,
+)
+
+# Maximum number of days to go back in time
+# ERROR_CODE:10002 Max look back window exceeded expected
+MAX_LOOK_BACK_DAYS = dict(
+    performance_stats=15,
+    keyword_stats=750,
+)
 
 
 def get_abs_path(path: str) -> str:
@@ -49,11 +73,11 @@ def load_directory(dir_path: str) -> dict:
     # Iterate over schema files
     for filename in os.listdir(abs_path):
         path = os.path.join(abs_path, filename)
-        file_raw = filename.replace('.json', '')
+        name = filename.replace('.json', '').casefold().replace(' ', '_')
 
         # Parse JSON
         with open(path) as file:
-            schemas[file_raw] = json.load(file)
+            schemas[name] = json.load(file)
 
             LOGGER.debug('Loaded "%s"', file.name)
 
@@ -63,7 +87,13 @@ def load_directory(dir_path: str) -> dict:
 def load_schemas() -> dict:
     """Load schemas from config files"""
 
-    return load_directory(SCHEMAS_DIR)
+    schemas = load_directory(SCHEMAS_DIR)
+
+    # Build singer.Schema objects from raw JSON data
+    for name, data in schemas.items():
+        schemas[name] = singer.Schema.from_dict(data=data)
+
+    return schemas
 
 
 def load_metadata() -> dict:
@@ -76,6 +106,47 @@ def load_key_properties() -> dict:
     """Load key properties from config files"""
 
     return load_directory(KEY_PROPERTIES_DIR)
+
+
+def object_to_json(data: dict) -> dict:
+    """Make a dictionary JSON serialisable"""
+
+    for key, value in data.items():
+        # Convert timestamps to string for JSON output
+        if isinstance(value, datetime.datetime) or isinstance(value, datetime.date):
+            data[key] = singer.utils.strftime(value)
+
+    return data
+
+
+def generate_time_windows(start: datetime.date, size: int, end: datetime.date = None) -> iter:
+    """Generate a collection of time ranges of a certain size"""
+
+    # Default end time range today
+    if end is None:
+        end = datetime.date.today()
+
+    # Enforce data types
+    start = datetime.date(start.year, start.month, start.day)
+    end = datetime.date(end.year, end.month, end.day)
+
+    # Define time window size e.g. 15 days
+    window = datetime.timedelta(days=size)
+
+    _start = start
+    while True:
+        _end = _start + window
+
+        # Maximum date
+        _end = min(_end, end)
+
+        yield (_start, _end)
+
+        if _end >= end:
+            return
+
+        # Define start of next
+        _start = _end + datetime.timedelta(days=1)
 
 
 def discover() -> singer.Catalog:
@@ -124,11 +195,45 @@ def get_selected_streams(catalog: singer.Catalog) -> list:
     return selected_streams
 
 
+def build_report_definition(config: dict, stream, start_date: datetime.date,
+                            end_date: datetime.date) -> dict:
+    """
+    Convert a JSON schema to a Gemini report request
+
+    JSON schema:
+
+        http://json-schema.org/
+    """
+    # Check type
+    for date in {start_date, end_date}:
+        if not isinstance(date, datetime.date):
+            raise TypeError(type(date))
+
+    return report.GeminiReport.build_definition(
+        advertiser_ids=list(config['advertiser_ids']),
+        cube=str(stream.stream),
+        field_names=list(stream.schema.properties.keys()),
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+
 def sync(config: dict, state: dict, catalog: singer.Catalog):
     """Synchronise data from source schemas using input context"""
 
     # Parse date
     start_date = datetime.datetime.fromisoformat(config['start_date'])
+    start_date = start_date.date()
+
+    # Load state
+    try:
+        assert state['type'] == 'STATE', 'Invalid state file'
+
+        # Begin where we left off
+        state_end_date = datetime.date.fromisoformat(state['value'])
+        start_date = max(start_date, state_end_date)
+    except KeyError:
+        pass
 
     selected_stream_ids = get_selected_streams(catalog)
 
@@ -146,38 +251,92 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
         # Emit schema
         singer.write_schema(
             stream_name=stream_id,
-            schema=stream.schema,
+            schema=stream.schema.to_dict(),
             key_properties=stream.key_properties
         )
 
-        # Create data stream
-
-        report_definition = tap_gemini.report.build_report_definition(
-            config=config,
-            state=state,
-            stream=stream,
-            start_date=start_date,
-            end_date=datetime.date.today())
-
         # Initialise Gemini HTTP API session
-        session = tap_gemini.transport.GeminiSession(
+        session = transport.GeminiSession(
             client_id=config['username'],
             api_version=config['api_version'],
             client_secret=config['password'],
             refresh_token=config['refresh_token'],
             user_agent=config['user_agent'],
-            session_options=config['session']
+            session_options=config.get('session', dict())
         )
 
-        gemini_report = tap_gemini.report.GeminiReport(
-            session=session,
-            report_definition=report_definition,
-            poll_interval=config['poll_interval']
-        )
+        # Create data stream
+        time_extracted = singer.utils.now()
 
-        # Emit records
-        for record in gemini_report.run():
-            singer.write_record(stream_name=stream_id, record=record)
+        if stream_id in OBJECT_MAP.keys():
+            # List API objects
+            model = OBJECT_MAP[stream_id]
+
+            # Write records
+            for obj in model.list(session=session):
+                singer.write_record(
+                    stream_name=stream_id,
+                    record=object_to_json(obj.to_dict()),
+                    time_extracted=time_extracted
+                )
+
+        else:
+            # Run report
+
+            # Define time range
+
+            # Maximum look back (i.e. earliest start date for report)
+            try:
+                days = MAX_LOOK_BACK_DAYS[stream_id]
+                start_date = max(start_date, datetime.date.today() - datetime.timedelta(days=days))
+                LOGGER.warning("%s enforced maximum look back of %s days, start date set to %s",
+                               stream_id, days, start_date)
+            except KeyError:
+                pass
+
+            end_date = datetime.date.today()
+
+            # Break into time window chunks
+            try:
+                time_windows = generate_time_windows(start=start_date,
+                                                     size=MAX_WINDOW_DAYS[stream_id])
+            except KeyError:
+                time_windows = (
+                    (start_date, end_date),
+                )
+
+            for start, end in time_windows:
+                # Build report definition
+                report_definition = build_report_definition(
+                    config=config,
+                    stream=stream,
+                    start_date=start,
+                    end_date=end
+                )
+
+                # Define the report request
+                rep = report.GeminiReport(
+                    session=session,
+                    report_definition=report_definition,
+                    poll_interval=config['poll_interval']
+                )
+
+                # Emit records
+
+                # Stream data rows
+                with singer.metrics.Timer(metric='job_timer', tags=rep.tags):
+                    # Generate data and count rows
+                    with singer.metrics.Counter(metric='record_count', tags=rep.tags) as counter:
+                        for row in rep.stream():
+                            counter.increment()
+                            singer.write_record(
+                                stream_name=stream_id,
+                                record=object_to_json(row),
+                                time_extracted=time_extracted
+                            )
+
+                # Save state on success
+                singer.write_state(value=rep.end_date)
 
 
 @singer.utils.handle_top_exception(LOGGER)
@@ -190,7 +349,7 @@ def main():
     # If discover flag was passed, run discovery mode and dump output to stdout
     if args.discover:
         catalog = discover()
-        print(json.dumps(catalog, indent=2))
+        print(json.dumps(catalog.to_dict(), indent=2))
     # Otherwise run in sync mode
     else:
         if args.catalog:

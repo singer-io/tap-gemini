@@ -8,58 +8,18 @@ import datetime
 import logging
 import time
 
-import singer
-
 LOGGER = logging.getLogger(__name__)
 
 YAHOO_REPORT_ENDPOINT = 'reports/custom'
 DATE_FORMAT = '%Y-%m-%d'
 
 
-def build_report_definition(config, state, stream, start_date: datetime.date,
-                            end_date: datetime.date) -> dict:
-    """
-    Convert a JSON schema to a Gemini report request
-    
-    JSON schema:
-    
-        http://json-schema.org/
-    
-    Gemini: Working with cubes:
-    
-        https://developer.yahoo.com/nativeandsearch/guide/reporting/
-    """
-
-    # TODO implement state
-    # LOGGER.debug("STATE: %s", state)
-
-    field_names = stream.schema['properties'].keys()
-    advertiser_ids = config['advertiser_ids']
-
-    # Use ISO formatting
-    start_date = start_date.strftime(DATE_FORMAT)
-    end_date = end_date.strftime(DATE_FORMAT)
-
-    # Build report definition
-    return dict(
-        cube=stream.stream,
-        fields=[
-            dict(field=field_name) for field_name in field_names
-        ],
-        filters=[
-            # Mandatory filters
-
-            # Accounts
-            {'field': 'Advertiser ID', 'operator': 'IN', 'values': advertiser_ids},
-
-            # Time range
-            {'field': 'Day', 'from': start_date, 'operator': 'between', 'to': end_date}
-        ]
-    )
-
-
 class GeminiReport:
-    """Yahoo Gemini Report"""
+    """
+    Yahoo Gemini Native & Search API Report
+
+    https://developer.yahoo.com/nativeandsearch/guide/reporting/
+    """
 
     def __init__(self, session, report_definition: dict, poll_interval: float = 1.):
         self.report_definition = report_definition
@@ -67,6 +27,41 @@ class GeminiReport:
         self.poll_interval = poll_interval
         self.job_id = None
         self.download_url = None
+
+    @staticmethod
+    def build_definition(advertiser_ids: list, cube: str, field_names: list,
+                         start_date: datetime.date, end_date: datetime.date = None,
+                         filters: list = None):
+        """
+        Build report definition
+
+        https://developer.yahoo.com/nativeandsearch/guide/reporting/
+        """
+
+        if end_date is None:
+            end_date = datetime.date.today()
+
+        # Use ISO formatting
+        start_date = start_date.strftime(DATE_FORMAT)
+        end_date = end_date.strftime(DATE_FORMAT)
+
+        # Mandatory filters
+        _filters = [
+            # Accounts
+            {'field': 'Advertiser ID', 'operator': 'IN', 'values': advertiser_ids},
+            # Time range
+            {'field': 'Day', 'from': start_date, 'operator': 'between', 'to': end_date}
+        ]
+        if filters:
+            # Optional filters
+            _filters.extend(filters)
+
+        # Build report definition
+        return dict(
+            cube=cube,
+            fields=[dict(field=str(field_name)) for field_name in field_names],
+            filters=_filters
+        )
 
     def submit(self) -> str:
         """
@@ -76,7 +71,7 @@ class GeminiReport:
         """
 
         data = self.session.call(
-            method='post',
+            method='POST',
             endpoint=YAHOO_REPORT_ENDPOINT,
             json=self.report_definition
         )
@@ -112,11 +107,11 @@ class GeminiReport:
         n_attempts = 0
         while True:
             n_attempts += 1
-            LOGGER.info('JOB ID: %s POLL Attempt #%s', job_id, n_attempts)
 
             response = self.session.call(
                 endpoint=endpoint,
-                params={'advertiserId': self.advertiser_id}
+                params={'advertiserId': self.advertiser_id},
+                tags=dict(poll_count=n_attempts)
             )
 
             # Check the report status
@@ -143,8 +138,11 @@ class GeminiReport:
 
         return download_url
 
-    def _stream(self) -> iter:
-        """"
+    def stream(self) -> iter:
+        """
+        Retrieve data from the Yahoo Gemini Report API by submitting a report request,
+        waiting for it to by ready, then streaming the report data.
+
         Stream data rows from a CSV file, yielding an iterator with one dictionary per data row.
         """
 
@@ -164,14 +162,9 @@ class GeminiReport:
         # Yield data rows from the CSV stream
         yield from csv.DictReader(data, fieldnames=headers)
 
-    def stream(self) -> iter:
-        """Wrapper for data streaming function to implement Singer metrics"""
-
-        # Generate data and count rows
-        with singer.metrics.Counter(metric='record_count', tags=self.tags) as counter:
-            for row in self._stream():
-                counter.increment()
-                yield row
+    def parse_timestamps(self, timestamp: datetime.datetime) -> datetime.datetime:
+        """Parse timestamps and insert time zone info"""
+        raise NotImplementedError()
 
     @property
     def advertiser_id(self) -> int:
@@ -200,21 +193,6 @@ class GeminiReport:
             if report_filter['field'] == 'Day':
                 return report_filter['to']
         raise ValueError('No date range specified')
-
-    def run(self) -> iter:
-        """
-        Retrieve data from the Yahoo Gemini Report API by submitting a report request, waiting for
-        it to by ready, then streaming the report data.
-
-        https://developer.yahoo.com/nativeandsearch/guide/reporting/
-        """
-
-        # Stream data rows
-        with singer.metrics.Timer(metric='job_timer', tags=self.tags):
-            yield from self.stream()
-
-        # Save state on success
-        singer.write_state(value=self.end_date)
 
     @property
     def tags(self) -> dict:

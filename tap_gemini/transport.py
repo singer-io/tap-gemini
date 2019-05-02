@@ -140,7 +140,7 @@ class GeminiSession(requests.Session):
 
         :returns: Authentication meta-data
         """
-        params = dict(
+        response = self.post(
             url=AUTHENTICATION_URL,
             data=dict(
                 client_id=self.client_id,
@@ -152,7 +152,6 @@ class GeminiSession(requests.Session):
             ),
             auth=False
         )
-        response = self.post(**params)
         data = response.json()
 
         # Parse seconds
@@ -192,11 +191,11 @@ class GeminiSession(requests.Session):
             for key, value in error.items():
                 LOGGER.error("%s: %s", key, value)
 
-    def request(self, *args, **kwargs) -> requests.Response:
+    def request(self, method: str, url: str, *args, **kwargs) -> requests.Response:
         """Wrapper for requests methods, implement error handling"""
 
         # Make HTTP request
-        response = super().request(*args, **kwargs)
+        response = super().request(method, url, *args, **kwargs)
         self.log_response_headers(response)
 
         try:
@@ -222,13 +221,15 @@ class GeminiSession(requests.Session):
 
         return response
 
-    def call(self, method: str = 'get', endpoint: str = '', **kwargs):
+    def call(self, method: str = 'GET', endpoint: str = '', tags: dict = None, **kwargs):
         """
         Make a call to an API endpoint and return response data
 
         :rtype: May return a dictionary or a list
         :returns: Endpoint response
         """
+        if tags is None:
+            tags = dict()
 
         url = kwargs.get('url', self.build_url(endpoint=endpoint))
 
@@ -239,7 +240,8 @@ class GeminiSession(requests.Session):
             endpoint=endpoint,
             params=kwargs.get('params'),
             json=kwargs.get('json'),
-            data=kwargs.get('data')
+            data=kwargs.get('data'),
+            **tags
         )
         with singer.metrics.Timer(metric='http_request_timer', tags=tags):
             # Retrieve HTTP response
@@ -294,10 +296,11 @@ def sandbox_signup():
     raise NotImplementedError()
 
 
-def debug():
-    """Test API connection"""
+def debug(config_path):
+    """Test HTTP API connection"""
 
-    with open('config.json') as file:
+    # Load config file
+    with open(config_path, 'r') as file:
         config = json.load(file)
         LOGGER.info('Loaded "{}"'.format(file.name))
 
@@ -305,7 +308,7 @@ def debug():
     session = GeminiSession(
         client_id=config['username'],
         access_token=config['password'],
-        session_options=config['session'],
+        session_options=config.get('session', dict()),
     )
 
     LOGGER.info(session)
@@ -316,11 +319,12 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--debug', action='store_true', help="Debug API connection")
+    parser.add_argument('-c', '--config', help='Config file')
 
     args = parser.parse_args()
 
     if args.debug:
-        debug()
+        debug(config_path=args.config)
     else:
         parser.print_help()
 

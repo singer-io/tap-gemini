@@ -5,9 +5,11 @@ following the [Singer spec](https://github.com/singer-io/getting-started/blob/ma
 
 This tap:
 
-- Pulls raw data from [Yahoo Gemini reporting API](http://example.com)
+- Pulls raw data from [Yahoo Gemini reporting API](https://developer.yahoo.com/nativeandsearch/guide/reporting/)
 - Extracts the following [reporting cubes](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/):
-  - [Performance stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#performance-stats)
+    - performance_stats
+    - keyword_stats
+    - search_stats
 - Outputs the schema for each resource
 - Incrementally pulls data based on the input state
 
@@ -54,7 +56,7 @@ For **each** table that the tap produces, provide the following:
 
 ## Troubleshooting / Other Important Info
 
-Anything else users should know about using this tap? For example: `some_column` is a Unix timestamp.
+All dates and times use the `advertiser` time zone.
 
 One can debug the API HTTP connection by running the following command:
 

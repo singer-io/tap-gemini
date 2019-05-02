@@ -1,0 +1,89 @@
+{
+  "type": [
+    "string",
+    "integer",
+    "date-time",
+    "array",
+    "object",
+    "float"
+  ],
+  "additionalProperties": false,
+  "description": "See description: https://developer.yahoo.com/nativeandsearch/guide/campaigns.html",
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "createdDate": {
+      "type": "date-time"
+    },
+    "lastUpdateDate": {
+      "type": "date-time"
+    },
+    "status": {
+      "type": "string"
+    },
+    "budgetType": {
+      "type": "string"
+    },
+    "conversionRuleIds": {
+      "type": "array"
+    },
+    "campaignName": {
+      "type": "string"
+    },
+    "biddingStrategy": {
+      "type": "string"
+    },
+    "advertiserId": {
+      "type": "integer"
+    },
+    "conversionRuleConfig": {
+      "type": "object"
+    },
+    "subChannelModifier": {
+      "type": "float"
+    },
+    "budget": {
+      "type": "integer"
+    },
+    "trackingUrl": {
+      "type": "string"
+    },
+    "isPartnerNetwork": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string"
+    },
+    "customParameters": {
+      "type": "string"
+    },
+    "advancedGeoPos": {
+      "type": "string"
+    },
+    "advancedGeoNeg": {
+      "type": "string"
+    },
+    "optimizationRuleIds": {
+      "type": "array"
+    },
+    "objective": {
+      "type": "string"
+    },
+    "effectiveStatus": {
+      "type": "string"
+    },
+    "subChannel": {
+      "type": "string"
+    },
+    "editorialStatus": {
+      "type": "string"
+    },
+    "channel": {
+      "type": "string"
+    },
+    "isDeepLink": {
+      "type": "string"
+    }
+  }
+}
