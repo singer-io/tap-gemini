@@ -1,10 +1,28 @@
 [
   {
     "metadata": {
-      "selected": true,
+      "selected": false,
       "inclusion": "available",
-      "description": "This cube contains keyword level performance data, and also allows querying for the search queries that triggered keywords and ads, as well as for keyword level performance by device. Note that the cube does not include any over delivery spend adjustments which are available in the adjustment_stats cube."
+      "replication_method": "INCREMENTAL"
     },
     "breadcrumb": []
+  },
+  {
+    "metadata": {
+      "inclusion": "automatic"
+    },
+    "breadcrumb": [
+      "properties",
+      "Day"
+    ]
+  },
+  {
+    "metadata": {
+      "inclusion": "automatic"
+    },
+    "breadcrumb": [
+      "properties",
+      "Advertiser ID"
+    ]
   }
 ]

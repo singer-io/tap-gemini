@@ -95,6 +95,8 @@ class GeminiReport:
         :returns: URL of the report data to download
         """
 
+        start_time = time.time()
+
         if job_id is None:
             if self.job_id:
                 job_id = self.job_id
@@ -105,13 +107,22 @@ class GeminiReport:
 
         # Repeatedly poll the reporting server until the data is ready to download
         n_attempts = 0
+        status = 'submitted'
+
         while True:
             n_attempts += 1
+
+            # Time delay (minimum one second)
+            secs = (max(1.0, self.poll_interval) + 0.1) ** n_attempts
 
             response = self.session.call(
                 endpoint=endpoint,
                 params={'advertiserId': self.advertiser_id},
-                tags=dict(poll_count=n_attempts)
+                tags=dict(
+                    poll_attempt=n_attempts,
+                    poll_time_seconds=time.time() - start_time,
+                    poll_latest_status=status
+                )
             )
 
             # Check the report status
@@ -122,16 +133,13 @@ class GeminiReport:
                 download_url = response['jobResponse']
                 break
 
-            # The job is in queue but work on it has yet to commence.
-            elif status == 'submitted':
-                time.sleep(self.poll_interval * 3)
-
-            # Short time delay before polling again
-            elif status == 'running':
-                time.sleep(self.poll_interval)
+            # The job is running or in a queue waiting to commence
+            elif status in {'running', 'submitted'}:
+                # Short time delay before polling again, exponential decay
+                time.sleep(secs)
 
             else:
-                LOGGER.error('Unknown server response: %s', response)
+                LOGGER.error('Unknown poll status: %s', response)
                 raise ValueError(response)
 
         self.download_url = download_url

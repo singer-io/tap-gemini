@@ -1,0 +1,88 @@
+{
+  "type": [
+    "date-time",
+    "date",
+    "integer",
+    "float",
+    "string"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "Advertiser ID": {
+      "type": "integer",
+      "description": "The ID of the advertiser."
+    },
+    "Campaign ID": {
+      "type": "integer",
+      "description": "The ID of the campaign."
+    },
+    "Ad Group ID": {
+      "type": "integer",
+      "description": "The ID of the ad group."
+    },
+    "Ad ID": {
+      "type": "integer",
+      "description": "The ID of the ad."
+    },
+    "Month": {
+      "type": "string",
+      "description": "Month will be represented as the first day of the month in YYYY-MM-DD format. Either Day, Week or Month must be queried."
+    },
+    "Week": {
+      "type": "string",
+      "description": "Week will be represented as the first day of the week in YYYY-MM-DD format. This will always be Monday. Either Day, Week or Month must be queried."
+    },
+    "Day": {
+      "type": "date",
+      "description": "The date in YYYY-MM-DD format. Either Day, Week or Month must be queried."
+    },
+    "Hour": {
+      "type": "string",
+      "description": "The hour in integer format. For example, 1 means reporting stats between 1am and 2am."
+    },
+    "Pricing Type": {
+      "type": "string",
+      "description": "CPC, CPM"
+    },
+    "Source": {
+      "type": "string",
+      "description": "Integer value corresponding to various Source types."
+    },
+    "Card ID": {
+      "type": "integer",
+      "description": "Ad slot asset Id."
+    },
+    "Card Position": {
+      "type": "string",
+      "description": "Ad slot Horizontal Index."
+    },
+    "Ad Format Name": {
+      "type": "string",
+      "description": "Category of Ad like Single Image, Mail Ad, Video, etc."
+    },
+    "Rendered Type": {
+      "type": "string",
+      "description": "Ad got rendered as Standard (e.g. Text) or Multiple (e.g. Carousel)."
+    },
+    "Impressions": {
+      "type": "integer",
+      "description": "The number of impressions."
+    },
+    "Clicks": {
+      "type": "integer",
+      "description": "The number of clicks."
+    },
+    "Post Click Conversions": {
+      "type": "integer",
+      "description": "The total number of post click conversions."
+    },
+    "Spend": {
+      "type": "float",
+      "description": "The unadjusted spend amount. Please note that adjustments - meaning any corrections due to issues like overcharging - can be queried using the adjustment_stats cube."
+    },
+    "CTR": {
+      "type": "float",
+      "description": "The clickthrough rate."
+    }
+  }
+}

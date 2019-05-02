@@ -1,0 +1,60 @@
+{
+  "type": [
+    "date-time",
+    "date",
+    "integer",
+    "float",
+    "string"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "Advertiser ID": {
+      "type": "integer",
+      "description": "The ID of the advertiser."
+    },
+    "Campaign ID": {
+      "type": "integer",
+      "description": "The ID of the campaign."
+    },
+    "Day": {
+      "type": "date",
+      "description": "The date in YYYY-MM-DD format."
+    },
+    "Pricing Type": {
+      "type": "string",
+      "description": "CPC, CPM"
+    },
+    "Source Name": {
+      "type": "string",
+      "description": "Native, Search or Other."
+    },
+    "Is Adjustment": {
+      "type": "string",
+      "description": "For adjustment rows (\u2018Is Adjustment\u2019 = \u2018Y\u2019) all fact values other than Spend are always blank. Pricing Type and Source values are also blank."
+    },
+    "Adjustment Type": {
+      "type": "string",
+      "description": "If you request a report at Campaign ID granularity (\u2018Campaign ID\u2019 is in your fields list), then you will get only campaign adjustment rows (plus unadjusted rows). If you request a report at Advertiser ID granularity (\u2018Advertiser ID\u2019 is in your fields list), then you will potentially get both account adjustments (Adjustment Type = \u2018Account\u2019) and rolled up campaign adjustment (Adjustment Type = \u2018Campaign\u2019), as well as unadjusted rows (Adjustment Type = \u2018None\u2019)."
+    },
+    "Impressions": {
+      "type": "integer",
+      "description": "The number of impressions."
+    },
+    "Clicks": {
+      "type": "integer",
+      "description": "The number of clicks."
+    },
+    "Conversions": {
+      "type": "integer",
+      "description": "The total number of conversions includes both post click and post view conversions."
+    },
+    "Spend": {
+      "type": "float",
+      "description": "The spend amount."
+    },
+    "Average Position": {
+      "type": "integer",
+      "description": "Impression weighted average position."
+    }
+  }
+}

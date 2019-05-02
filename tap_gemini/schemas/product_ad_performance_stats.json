@@ -20,9 +20,9 @@
       "type": "integer",
       "description": "The ID of the ad group."
     },
-    "Ad ID": {
+    "Product Ad ID": {
       "type": "integer",
-      "description": "The ID of the ad."
+      "description": "The ID of the Product ad."
     },
     "Month": {
       "type": "string",
@@ -50,7 +50,7 @@
     },
     "Source Name": {
       "type": "string",
-      "description": "Native, Search or Other."
+      "description": "Native, Search, or Other."
     },
     "Impressions": {
       "type": "integer",
@@ -199,18 +199,6 @@
     "Fact Conversion Counting": {
       "type": "string",
       "description": "The way your conversions were counted for the campaign during the report time range (ALL_PER_INTERACTION, ONE_PER_INTERACTION)."
-    },
-    "Interactions": {
-      "type": "integer",
-      "description": "The number of positive user interactions with an ad, like swipes, saves, opens, submits, and so on \u2013 for example, the number of carousel cards viewed. Note that video play interactions are only counted from sessions that qualify for an interactive impression."
-    },
-    "Interaction Rate": {
-      "type": "float",
-      "description": "The sum of all interactions (both positive and neutral) relative to the total number of impressions, expressed as a percentage \u2013 for example, .3. Note that neutral interactions include interactions like close or skip ad."
-    },
-    "Interactive Impressions Rate": {
-      "type": "float",
-      "description": "The sum of positive interactions impressions relative to the total number of impressions, expressed as a percentage \u2013 for example, .5."
     }
   }
 }

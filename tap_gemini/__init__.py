@@ -17,8 +17,9 @@ import datetime
 import json
 import os
 
-import singer.metadata
+import singer.metrics
 import singer.utils
+import singer.metadata
 
 import transport
 import report
@@ -77,7 +78,11 @@ def load_directory(dir_path: str) -> dict:
 
         # Parse JSON
         with open(path) as file:
-            schemas[name] = json.load(file)
+            try:
+                schemas[name] = json.load(file)
+            except json.JSONDecodeError:
+                singer.log_error('JSON syntax error in file "%s"', file.name)
+                raise
 
             LOGGER.debug('Loaded "%s"', file.name)
 
@@ -113,7 +118,7 @@ def object_to_json(data: dict) -> dict:
 
     for key, value in data.items():
         # Convert timestamps to string for JSON output
-        if isinstance(value, datetime.datetime) or isinstance(value, datetime.date):
+        if isinstance(value, (datetime.date, datetime.datetime)):
             data[key] = singer.utils.strftime(value)
 
     return data
@@ -218,6 +223,32 @@ def build_report_definition(config: dict, stream, start_date: datetime.date,
     )
 
 
+def filter_schema(schema: dict, metadata: list) -> dict:
+    """Select fields using meta-data"""
+    for item in metadata:
+        try:
+            if item['breadcrumb'][0] == 'properties':
+                property_name = item['breadcrumb'][1]
+
+                # Get metadata for this property
+                selected = item['metadata'].get('selected', True)
+                inclusion = item['metadata'].get('inclusion', 'available')
+
+                # Some fields are mandatory
+                if inclusion == 'automatic':
+                    selected = True
+
+                # Remove if not selected
+                if not selected or (inclusion == 'unsupported'):
+                    del schema.properties[property_name]
+                    LOGGER.info('Removed property "%s"', property_name)
+
+        except IndexError:
+            pass
+
+    return schema
+
+
 def sync(config: dict, state: dict, catalog: singer.Catalog):
     """Synchronise data from source schemas using input context"""
 
@@ -230,12 +261,14 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
         assert state['type'] == 'STATE', 'Invalid state file'
 
         # Begin where we left off
-        state_end_date = datetime.date.fromisoformat(state['value'])
-        start_date = max(start_date, state_end_date)
+        start_date = datetime.date.fromisoformat(state['value'])
     except KeyError:
         pass
 
     selected_stream_ids = get_selected_streams(catalog)
+
+    if not selected_stream_ids:
+        LOGGER.warning('No streams selected')
 
     # Loop over streams in catalog
     for stream in catalog.streams:
@@ -248,12 +281,11 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
 
         LOGGER.info('Syncing stream:%s', stream_id)
 
+        filter_schema(stream.schema, stream.metadata)
+
         # Emit schema
-        singer.write_schema(
-            stream_name=stream_id,
-            schema=stream.schema.to_dict(),
-            key_properties=stream.key_properties
-        )
+        singer.write_schema(stream_name=stream_id, schema=stream.schema.to_dict(),
+                            key_properties=stream.key_properties)
 
         # Initialise Gemini HTTP API session
         session = transport.GeminiSession(
@@ -265,9 +297,9 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
             session_options=config.get('session', dict())
         )
 
-        # Create data stream
         time_extracted = singer.utils.now()
 
+        # Create data stream
         if stream_id in OBJECT_MAP.keys():
             # List API objects
             model = OBJECT_MAP[stream_id]
@@ -284,7 +316,6 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
             # Run report
 
             # Define time range
-
             # Maximum look back (i.e. earliest start date for report)
             try:
                 days = MAX_LOOK_BACK_DAYS[stream_id]
@@ -318,7 +349,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                 rep = report.GeminiReport(
                     session=session,
                     report_definition=report_definition,
-                    poll_interval=config['poll_interval']
+                    poll_interval=config.get('poll_interval', 1)
                 )
 
                 # Emit records

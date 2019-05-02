@@ -1,0 +1,65 @@
+[
+  {
+    "metadata": {
+      "selected": true,
+      "inclusion": "available",
+      "replication_method": "INCREMENTAL",
+      "replication-key": "Day"
+    },
+    "breadcrumb": []
+  },
+  {
+    "metadata": {
+      "inclusion": "automatic"
+    },
+    "breadcrumb": [
+      "properties",
+      "Day"
+    ]
+  },
+  {
+    "metadata": {
+      "inclusion": "automatic"
+    },
+    "breadcrumb": [
+      "properties",
+      "Advertiser ID"
+    ]
+  },
+  {
+    "metadata": {
+      "inclusion": "unsupported"
+    },
+    "breadcrumb": [
+      "properties",
+      "Offer Group ID"
+    ]
+  },
+  {
+    "metadata": {
+      "inclusion": "unsupported"
+    },
+    "breadcrumb": [
+      "properties",
+      "Offer ID"
+    ]
+  },
+  {
+    "metadata": {
+      "inclusion": "unsupported"
+    },
+    "breadcrumb": [
+      "properties",
+      "Post View Conversions"
+    ]
+  },
+  {
+    "metadata": {
+      "inclusion": "unsupported"
+    },
+    "breadcrumb": [
+      "properties",
+      "Device Type"
+    ]
+  }
+]
