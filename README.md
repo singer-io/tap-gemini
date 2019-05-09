@@ -63,3 +63,7 @@ One can debug the API HTTP connection by running the following command:
 ```bash
 python tap_gemini\transport.py --debug
 ```
+
+---
+
+Copyright &copy; 2019 Stitch
