@@ -62,15 +62,15 @@
     },
     "Country": {
       "type": "string",
-      "description": "Name of the user\u2019s country."
+      "description": "Name of the users country."
     },
     "State": {
       "type": "string",
-      "description": "Name of the user\u2019s state."
+      "description": "Name of the users state."
     },
     "City": {
       "type": "string",
-      "description": "Name of the user\u2019s City."
+      "description": "Name of the users City."
     },
     "Zip": {
       "type": "string",

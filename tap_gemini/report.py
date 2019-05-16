@@ -21,10 +21,10 @@ class GeminiReport:
     https://developer.yahoo.com/nativeandsearch/guide/reporting/
     """
 
-    def __init__(self, session, report_definition: dict, poll_interval: float = 1.):
+    def __init__(self, session, report_definition: dict, poll_interval: float = 1.0):
         self.report_definition = report_definition
         self.session = session
-        self.poll_interval = poll_interval
+        self.poll_interval = float(poll_interval)
         self.job_id = None
         self.download_url = None
 

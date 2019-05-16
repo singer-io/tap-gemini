@@ -38,11 +38,11 @@
     },
     "Month": {
       "type": "string",
-      "description": "Month will be represented as the first day of the month in YYYY-MM-DD\u2019 format."
+      "description": "Month will be represented as the first day of the month in YYYY-MM-DD format."
     },
     "Week": {
       "type": "string",
-      "description": "Week will be represented as the first day of the week in YYYY-MM-DD\u2019 format."
+      "description": "Week will be represented as the first day of the week in YYYY-MM-DD format."
     },
     "Day": {
       "type": "date",

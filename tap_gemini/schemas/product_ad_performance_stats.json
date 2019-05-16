@@ -26,11 +26,11 @@
     },
     "Month": {
       "type": "string",
-      "description": "Month will be represented as the first day of the month in YYYY-MM-DD\u2019 format. Either Day, Week or Month must be queried."
+      "description": "Month will be represented as the first day of the month in YYYY-MM-DD format. Either Day, Week or Month must be queried."
     },
     "Week": {
       "type": "string",
-      "description": "Week will be represented as the first day of the week in YYYY-MM-DD\u2019 format. This will always be Monday. Either Day, Week or Month must be queried."
+      "description": "Week will be represented as the first day of the week in YYYY-MM-DD format. This will always be Monday. Either Day, Week or Month must be queried."
     },
     "Day": {
       "type": "date",

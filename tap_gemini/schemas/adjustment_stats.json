@@ -30,11 +30,11 @@
     },
     "Is Adjustment": {
       "type": "string",
-      "description": "For adjustment rows (\u2018Is Adjustment\u2019 = \u2018Y\u2019) all fact values other than Spend are always blank. Pricing Type and Source values are also blank."
+      "description": "For adjustment rows (\u2018Is Adjustment = \u2018Y) all fact values other than Spend are always blank. Pricing Type and Source values are also blank."
     },
     "Adjustment Type": {
       "type": "string",
-      "description": "If you request a report at Campaign ID granularity (\u2018Campaign ID\u2019 is in your fields list), then you will get only campaign adjustment rows (plus unadjusted rows). If you request a report at Advertiser ID granularity (\u2018Advertiser ID\u2019 is in your fields list), then you will potentially get both account adjustments (Adjustment Type = \u2018Account\u2019) and rolled up campaign adjustment (Adjustment Type = \u2018Campaign\u2019), as well as unadjusted rows (Adjustment Type = \u2018None\u2019)."
+      "description": "If you request a report at Campaign ID granularity (\u2018Campaign ID is in your fields list), then you will get only campaign adjustment rows (plus unadjusted rows). If you request a report at Advertiser ID granularity (\u2018Advertiser ID is in your fields list), then you will potentially get both account adjustments (Adjustment Type = \u2018Account) and rolled up campaign adjustment (Adjustment Type = \u2018Campaign), as well as unadjusted rows (Adjustment Type = \u2018None)."
     },
     "Impressions": {
       "type": "integer",

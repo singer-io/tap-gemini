@@ -77,24 +77,27 @@ def load_directory(dir_path: str) -> dict:
 
     abs_path = get_abs_path(dir_path)
 
-    schemas = dict()
+    data = dict()
 
-    # Iterate over schema files
+    # Iterate over JSON files
     for filename in os.listdir(abs_path):
+        if not filename.endswith('json'):
+            continue
+
         path = os.path.join(abs_path, filename)
         name = filename.replace('.json', '').casefold().replace(' ', '_')
 
         # Parse JSON
         with open(path) as file:
             try:
-                schemas[name] = json.load(file)
+                data[name] = json.load(file)
             except json.JSONDecodeError:
                 singer.log_error('JSON syntax error in file "%s"', file.name)
                 raise
 
             singer.log_debug('Loaded "%s"', file.name)
 
-    return schemas
+    return data
 
 
 def load_schemas() -> dict:
@@ -122,7 +125,15 @@ def load_key_properties() -> dict:
 
 
 def generate_time_windows(start: datetime.date, size: int, end: datetime.date = None) -> iter:
-    """Generate a collection of time ranges of a certain size"""
+    """
+    Generate a collection of time ranges of a certain size to overcome the window-size limits for
+    some reports.
+
+    Each time range is defined using a two-tuple that contains the start and end date of that time
+    window.
+
+    :rtype: iter[tuple[datetime.date]]
+    """
 
     # Default end time range today
     if end is None:
@@ -147,7 +158,7 @@ def generate_time_windows(start: datetime.date, size: int, end: datetime.date = 
         if _end >= end:
             return
 
-        # Define start of next
+        # Move to the start of the next window
         _start = _end + datetime.timedelta(days=1)
 
 
@@ -160,6 +171,7 @@ def discover() -> singer.Catalog:
 
     streams = list()
 
+    # Build catalog by iterating over schemas
     for schema_name, schema in raw_schemas.items():
         stream_metadata = list()
         stream_key_properties = list()
@@ -168,13 +180,15 @@ def discover() -> singer.Catalog:
         stream_metadata.extend(metadata.get(schema_name, list()))
         stream_key_properties.extend(key_properties.get(schema_name, list()))
 
-        # create and add catalog entry
+        # Create and add catalog entry
         catalog_entry = singer.catalog.CatalogEntry()
+
         catalog_entry.stream = schema_name
         catalog_entry.tap_stream_id = schema_name
         catalog_entry.schema = schema
         catalog_entry.metadata = stream_metadata
         catalog_entry.key_properties = stream_key_properties
+
         streams.append(catalog_entry)
 
     return singer.Catalog(streams)
@@ -282,8 +296,11 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
         filter_schema(stream.schema, stream.metadata)
 
         # Emit schema
-        singer.write_schema(stream_name=stream_id, schema=stream.schema.to_dict(),
-                            key_properties=stream.key_properties)
+        singer.write_schema(
+            stream_name=stream_id,
+            schema=stream.schema.to_dict(),
+            key_properties=stream.key_properties
+        )
 
         # Initialise Gemini HTTP API session
         session = tap_gemini.transport.GeminiSession(
@@ -299,14 +316,20 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
 
         # Create data stream
         if stream_id in OBJECT_MAP.keys():
+
             # List API objects
             model = OBJECT_MAP[stream_id]
 
-            # Write records
+            # Iterate over objects
             for data in model.list(session=session):
-                record = singer.transform(data=data, schema=stream.schema,
-                                          metadata=stream.metadata)
+                # Transform data row
+                record = singer.transform(
+                    data=data,
+                    schema=stream.schema.to_dict(),
+                    metadata=singer.metadata.to_map(stream.metadata)
+                )
 
+                # Emit data row
                 singer.write_record(
                     stream_name=stream_id,
                     record=record,
@@ -317,8 +340,8 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
             # Run report
 
             # Define time range
-            # Maximum look back (i.e. earliest start date for report)
             try:
+                # Maximum look back (i.e. earliest start date for report)
                 days = MAX_LOOK_BACK_DAYS[stream_id]
                 start_date = max(start_date, datetime.date.today() - datetime.timedelta(days=days))
                 singer.log_warning("%s enforced maximum look back of %s days, start date set to %s",
@@ -330,8 +353,10 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
 
             # Break into time window chunks
             try:
-                time_windows = generate_time_windows(start=start_date,
-                                                     size=MAX_WINDOW_DAYS[stream_id])
+                time_windows = generate_time_windows(
+                    start=start_date,
+                    size=MAX_WINDOW_DAYS[stream_id]
+                )
             except KeyError:
                 time_windows = (
                     (start_date, end_date),
@@ -347,21 +372,28 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                 )
 
                 # Define the report request
-                rep = tap_gemini.report.GeminiReport(
+                report = tap_gemini.report.GeminiReport(
                     session=session,
                     report_definition=report_definition,
-                    poll_interval=config.get('poll_interval', 1)
+                    poll_interval=config.get('poll_interval')  # default: one second
                 )
 
                 # Emit records
 
                 # Stream data rows
-                with singer.metrics.Timer(metric='job_timer', tags=rep.tags):
+                with singer.metrics.Timer(metric='job_timer', tags=report.tags):
                     # Generate data and count rows
-                    with singer.metrics.Counter(metric='record_count', tags=rep.tags) as counter:
-                        for data in rep.stream():
-                            record = singer.transform(data=data, schema=stream.schema,
-                                                      metadata=stream.metadata)
+                    with singer.metrics.Counter(metric='record_count', tags=report.tags) as counter:
+                        # Iterate over report data rows
+                        for data in report.stream():
+                            # Process data row
+                            record = singer.transform(
+                                data=data,
+                                schema=stream.schema.to_dict(),
+                                metadata=singer.metadata.to_map(stream.metadata)
+                            )
+
+                            # Emit data row
                             singer.write_record(
                                 stream_name=stream_id,
                                 record=record,
@@ -370,7 +402,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                             counter.increment()
 
                 # Save state on success
-                singer.write_state(value=rep.end_date)
+                singer.write_state(value=report.end_date)
 
 
 @singer.utils.handle_top_exception(LOGGER)
@@ -397,5 +429,5 @@ def main():
         sync(args.config, args.state, catalog)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

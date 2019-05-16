@@ -11,8 +11,8 @@ setup(
     py_modules=["tap_gemini"],
     install_requires=[
         "singer-python==5.4.1",
-        "requests==2.21.0",
-        "pytz==2018.4",
+        "requests",
+        "pytz",
     ],
     entry_points="""
     [console_scripts]

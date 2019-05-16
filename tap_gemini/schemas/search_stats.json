@@ -46,7 +46,7 @@
     },
     "Day": {
       "type": "date",
-      "description": "The date in in YYYY-MM-DD\u2019 format. Must be included in every query."
+      "description": "The date in in YYYY-MM-DD format. Must be included in every query."
     },
     "Impressions": {
       "type": "integer",
@@ -90,15 +90,15 @@
     },
     "Impression Share": {
       "type": "integer",
-      "description": "Share of Impressions that the Advertiser or Campaign served to a given Keyword, after factoring in Targeting. For example, if Campaign X served 10 impressions to the keyword \u2018basketball,\u2019 and a total of 100 bidded searches occurred on \u2018basketball\u2019 during the time period selected, then Campaign X has an Impression Share of 10% for the term \u2018basketball\u2019."
+      "description": "Share of Impressions that the Advertiser or Campaign served to a given Keyword, after factoring in Targeting. For example, if Campaign X served 10 impressions to the keyword \u2018basketball, and a total of 100 bidded searches occurred on \u2018basketball during the time period selected, then Campaign X has an Impression Share of 10% for the term \u2018basketball."
     },
     "Click Share": {
       "type": "integer",
-      "description": "Share of Clicks that the Advertiser or Campaign received on a given Keyword, after factoring in Targeting. For example, if Campaign X had 10 Clicks to the keyword \u2018basketball,\u2019 and a total of 100 Clicks occurred on \u2018basketball\u2019 during the time period selected, then Campaign X has a Click Share of 10% for the term \u2018basketball\u2019"
+      "description": "Share of Clicks that the Advertiser or Campaign received on a given Keyword, after factoring in Targeting. For example, if Campaign X had 10 Clicks to the keyword \u2018basketball, and a total of 100 Clicks occurred on \u2018basketball during the time period selected, then Campaign X has a Click Share of 10% for the term \u2018basketball"
     },
     "Conversion Share": {
       "type": "integer",
-      "description": "Share of Conversions that the Advertiser or Campaign received on a given Keyword, after factoring in Targeting. For example, if Campaign X had 10 Conversions to the keyword \u2018basketball,\u2019 and a total of 100 Conversions occurred on \u2018basketball\u2019 during the time period selected, then Campaign X has a Conversion Share of 10% for the term \u2018basketball\u2019."
+      "description": "Share of Conversions that the Advertiser or Campaign received on a given Keyword, after factoring in Targeting. For example, if Campaign X had 10 Conversions to the keyword \u2018basketball, and a total of 100 Conversions occurred on \u2018basketball during the time period selected, then Campaign X has a Conversion Share of 10% for the term \u2018basketball."
     }
   }
 }

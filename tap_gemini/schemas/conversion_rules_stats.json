@@ -54,7 +54,7 @@
     },
     "Day": {
       "type": "date",
-      "description": "The date in in YYYY-MM-DD\u2019 format. Must be included in every query."
+      "description": "The date in in YYYY-MM-DD format. Must be included in every query."
     },
     "Post View Conversions": {
       "type": "integer",

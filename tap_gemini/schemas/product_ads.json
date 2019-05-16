@@ -38,7 +38,7 @@
     },
     "Product Type": {
       "type": "string",
-      "description": "The merchant\u2019s own product category string, same value as the \u201cproduct type\u201d field in the product feed."
+      "description": "The merchants own product category string, same value as the \u201cproduct type\u201d field in the product feed."
     },
     "Brand": {
       "type": "string",
@@ -86,15 +86,15 @@
     },
     "Month": {
       "type": "string",
-      "description": "Month will be represented as the first day of the month in YYYY-MM-DD\u2019 format."
+      "description": "Month will be represented as the first day of the month in YYYY-MM-DD format."
     },
     "Week": {
       "type": "string",
-      "description": "Week will be represented as the first day of the week in YYYY-MM-DD\u2019 format."
+      "description": "Week will be represented as the first day of the week in YYYY-MM-DD format."
     },
     "Day": {
       "type": "date",
-      "description": "The date in in YYYY-MM-DD\u2019 format."
+      "description": "The date in in YYYY-MM-DD format."
     },
     "Impressions": {
       "type": "integer",
