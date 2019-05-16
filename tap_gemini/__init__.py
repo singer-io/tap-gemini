@@ -22,11 +22,9 @@ import singer.utils
 import singer.metadata
 import singer.transform
 
-import transport
-import report
-import api
-
-__version__ = '0.0.2'
+import tap_gemini.transport
+import tap_gemini.report
+import tap_gemini.api
 
 LOGGER = singer.get_logger()
 
@@ -43,8 +41,8 @@ KEY_PROPERTIES_DIR = 'key_properties'
 
 # Map schema name to API object
 OBJECT_MAP = dict(
-    advertiser=api.Advertiser,
-    campaign=api.Campaign,
+    advertiser=tap_gemini.api.Advertiser,
+    campaign=tap_gemini.api.Campaign,
     # TODO Implement further objects
     # adgroup=api.AdGroup
 )
@@ -213,7 +211,7 @@ def build_report_definition(config: dict, stream, start_date: datetime.date,
         if not isinstance(date, datetime.date):
             raise TypeError(type(date))
 
-    return report.GeminiReport.build_definition(
+    return tap_gemini.report.GeminiReport.build_definition(
         advertiser_ids=list(config['advertiser_ids']),
         cube=str(stream.stream),
         field_names=list(stream.schema.properties.keys()),
@@ -288,7 +286,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                             key_properties=stream.key_properties)
 
         # Initialise Gemini HTTP API session
-        session = transport.GeminiSession(
+        session = tap_gemini.transport.GeminiSession(
             client_id=config['username'],
             api_version=config['api_version'],
             client_secret=config['password'],
@@ -349,7 +347,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                 )
 
                 # Define the report request
-                rep = report.GeminiReport(
+                rep = tap_gemini.report.GeminiReport(
                     session=session,
                     report_definition=report_definition,
                     poll_interval=config.get('poll_interval', 1)

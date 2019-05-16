@@ -6,13 +6,13 @@ setup(
     version="0.1.0",
     description="Singer.io tap for extracting data from Yahoo Gemini",
     author="Joe Heffer",
-    url="https://bitbucket.org/Joe_Heffer/tap-gemini",
+    url="https://github.com/singer-io/tap-gemini",
     classifiers=["Programming Language :: Python :: 3 :: Only"],
     py_modules=["tap_gemini"],
     install_requires=[
-        "singer-python=5.4.1",
-        "requests=2.21.0",
-        "pytz=2018.4",
+        "singer-python==5.4.1",
+        "requests==2.21.0",
+        "pytz==2018.4",
     ],
     entry_points="""
     [console_scripts]
