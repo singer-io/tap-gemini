@@ -22,11 +22,11 @@ import singer.utils
 import singer.metadata
 import singer.transform
 
-import transport
-import report
-import api
+from . import transport
+from . import report
+from . import api
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 LOGGER = singer.get_logger()
 
