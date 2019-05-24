@@ -26,7 +26,7 @@ from . import transport
 from . import report
 from . import api
 
-__version__ = '0.0.2'
+__version__ = '0.0.3'
 
 LOGGER = singer.get_logger()
 
