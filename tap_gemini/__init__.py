@@ -17,10 +17,9 @@ import datetime
 import json
 import os
 
-import singer.metrics
-import singer.utils
+import singer
 import singer.metadata
-import singer.transform
+import singer.utils
 
 import tap_gemini.transport
 import tap_gemini.report
@@ -211,26 +210,19 @@ def get_selected_streams(catalog: singer.Catalog) -> list:
     return selected_streams
 
 
-def build_report_definition(config: dict, stream, start_date: datetime.date,
-                            end_date: datetime.date) -> dict:
+def build_report_params(config: dict, stream, start_date: datetime.date,
+                        end_date: datetime.date) -> dict:
     """
-    Convert a JSON schema to a Gemini report request
+    Convert a JSON schema to Gemini report parameters.
 
-    JSON schema:
-
-        http://json-schema.org/
+    JSON schema: http://json-schema.org/
     """
-    # Check type
-    for date in {start_date, end_date}:
-        if not isinstance(date, datetime.date):
-            raise TypeError(type(date))
-
-    return tap_gemini.report.GeminiReport.build_definition(
+    return dict(
         advertiser_ids=list(config['advertiser_ids']),
         cube=str(stream.stream),
         field_names=list(stream.schema.properties.keys()),
-        start_date=start_date,
-        end_date=end_date,
+        start_date=datetime.date(start_date.year, start_date.month, start_date.day),
+        end_date=datetime.date(end_date.year, end_date.month, end_date.day),
     )
 
 
@@ -261,28 +253,65 @@ def filter_schema(schema: dict, metadata: list) -> dict:
     return schema
 
 
+def row_to_json(row: dict) -> dict:
+    if not isinstance(row, dict):
+        raise TypeError(type(row))
+
+    new_row = dict()
+    for key, value in row.items():
+        if isinstance(value, (datetime.datetime, datetime.date)):
+            value = value.isoformat()
+
+        new_row[key] = value
+
+    return new_row
+
+
+def write_records(stream: singer.catalog.CatalogEntry, rows: iter, tags=None, limit: int = 0):
+    """Wrapper for singer utils"""
+
+    if limit:
+        import itertools
+        rows = itertools.islice(rows, 0, limit)
+        LOGGER.warning('Data limited to %s rows', limit)
+
+    with singer.metrics.Timer(metric='job_timer', tags=tags):
+        with singer.metrics.Counter(metric='record_count', tags=tags) as counter:
+            for row in rows:
+                # Transform data row for JSON output
+                row = singer.transform(
+                    data=row,
+                    schema=stream.schema.to_dict(),
+                    metadata=singer.metadata.to_map(stream.metadata)
+                )
+
+                # row = row_to_json(row)
+
+                # Emit row
+                singer.write_record(
+                    stream_name=stream.tap_stream_id,
+                    record=row,
+                    time_extracted=singer.utils.now()
+                )
+
+                counter.increment()
+
+
 def sync(config: dict, state: dict, catalog: singer.Catalog):
     """Synchronise data from source schemas using input context"""
 
-    # Parse date
-    start_date = datetime.datetime.fromisoformat(config['start_date'])
-    start_date = start_date.date()
+    # Get bookmarks of state of each stream
+    bookmarks = state.get('bookmarks', dict())
 
-    # Load state
-    try:
-        assert state['type'] == 'STATE', 'Invalid state file'
-
-        # Begin where we left off
-        start_date = datetime.date.fromisoformat(state['value'])
-    except KeyError:
-        pass
+    # Parse timestamp and convert to date
+    start_date = singer.utils.strptime_to_utc(config['start_date']).date()
 
     selected_stream_ids = get_selected_streams(catalog)
 
     if not selected_stream_ids:
         singer.log_warning('No streams selected')
 
-    # Loop over streams in catalog
+    # Iterate over streams in catalog
     for stream in catalog.streams:
 
         stream_id = stream.tap_stream_id
@@ -312,44 +341,42 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
             session_options=config.get('session', dict())
         )
 
-        time_extracted = singer.utils.now()
-
         # Create data stream
         if stream_id in OBJECT_MAP.keys():
 
             # List API objects
             model = OBJECT_MAP[stream_id]
 
-            # Iterate over objects
-            for data in model.list(session=session):
-                # Transform data row
-                record = singer.transform(
-                    data=data,
-                    schema=stream.schema.to_dict(),
-                    metadata=singer.metadata.to_map(stream.metadata)
-                )
-
-                # Emit data row
-                singer.write_record(
-                    stream_name=stream_id,
-                    record=record,
-                    time_extracted=time_extracted
-                )
+            write_records(
+                stream=stream,
+                rows=model.list_data(session=session),
+                tags=dict(
+                    object=stream_id
+                ),
+                limit=5
+            )
 
         else:
             # Run report
 
+            # Use bookmark to continue where we left off
+            bookmark = bookmarks.get(stream_id, dict())
+            start_date = bookmark.get('end_date', start_date)
+
             # Define time range
             try:
-                # Maximum look back (i.e. earliest start date for report)
+                # Is there a maximum look back? (i.e. earliest start date for report)
                 days = MAX_LOOK_BACK_DAYS[stream_id]
-                start_date = max(start_date, datetime.date.today() - datetime.timedelta(days=days))
-                singer.log_warning("%s enforced maximum look back of %s days, start date set to %s",
-                                   stream_id, days, start_date)
+                look_back_start_date = datetime.date.today() - datetime.timedelta(days=days)
+
+                # Must we confine the time range to avoid errors?
+                if look_back_start_date > start_date:
+                    start_date = look_back_start_date
+                    singer.log_warning(
+                        "%s enforced maximum look back of %s days, start date set to %s",
+                        stream_id, days, start_date)
             except KeyError:
                 pass
-
-            end_date = datetime.date.today()
 
             # Break into time window chunks
             try:
@@ -358,56 +385,54 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                     size=MAX_WINDOW_DAYS[stream_id]
                 )
             except KeyError:
+                # Default time window: just use specified start/end date
                 time_windows = (
-                    (start_date, end_date),
+                    (start_date, None),
                 )
 
+            # Each report is run within a single time window
             for start, end in time_windows:
                 # Build report definition
-                report_definition = build_report_definition(
+                report_params = build_report_params(
                     config=config,
                     stream=stream,
                     start_date=start,
                     end_date=end
                 )
 
-                # Define the report request
+                # Define the report
                 report = tap_gemini.report.GeminiReport(
                     session=session,
-                    report_definition=report_definition,
-                    poll_interval=config.get('poll_interval')  # default: one second
+                    poll_interval=config.get('poll_interval'),  # default: one second
+                    **report_params
                 )
 
+                # Find "close of business"
+                close_of_business = report.close_of_business(report.start_date)
+                LOGGER.info('CLOSE_OF_BUSINESS: %s', json.dumps(close_of_business))
+
                 # Emit records
+                write_records(
+                    stream=stream,
+                    rows=report.stream(),
+                    tags=report.tags,
+                    limit=5
+                )
 
-                # Stream data rows
-                with singer.metrics.Timer(metric='job_timer', tags=report.tags):
-                    # Generate data and count rows
-                    with singer.metrics.Counter(metric='record_count', tags=report.tags) as counter:
-                        # Iterate over report data rows
-                        for data in report.stream():
-                            # Process data row
-                            record = singer.transform(
-                                data=data,
-                                schema=stream.schema.to_dict(),
-                                metadata=singer.metadata.to_map(stream.metadata)
-                            )
+                # Preserve state for each stream
+                singer.write_bookmark(
+                    state=state,
+                    tap_stream_id=stream_id,
+                    key='end_date',
+                    val=report.end_date.isoformat()
+                )
 
-                            # Emit data row
-                            singer.write_record(
-                                stream_name=stream_id,
-                                record=record,
-                                time_extracted=time_extracted
-                            )
-                            counter.increment()
-
-                # Save state on success
-                singer.write_state(value=report.end_date)
+                singer.write_state(state)
 
 
 @singer.utils.handle_top_exception(LOGGER)
 def main():
-    """Run tap"""
+    """Execute tap: build catalog and synchronise."""
 
     # Parse command line arguments
     args = singer.utils.parse_args(REQUIRED_CONFIG_KEYS)

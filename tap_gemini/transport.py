@@ -261,73 +261,12 @@ class GeminiSession(requests.Session):
 
         return api_response
 
-    def list_advertisers(self) -> list:
+    @property
+    def advertisers(self) -> list:
         """https://developer.yahoo.com/nativeandsearch/guide/advertiser.html"""
         return self.call(endpoint='advertiser', params=dict(mr=500))
 
-    def get_data_dictionary(self) -> list:
+    @property
+    def dictionary(self) -> list:
         """https://developer.yahoo.com/nativeandsearch/guide/resources/data-dictionary/"""
         return self.call(endpoint='dictionary')
-
-
-def debug_url(url: str):
-    """Retrieve a URL via HTTP"""
-    response = requests.get(url=url)
-
-    try:
-        response.raise_for_status()
-
-    # Log error message
-    except requests.HTTPError as http_error:
-        LOGGER.error(http_error)
-        LOGGER.error(http_error.response.text)
-        for arg in http_error.args:
-            LOGGER.error(arg)
-        raise
-
-    print(response.text)
-
-    return response
-
-
-def sandbox_signup():
-    url = 'http://sandbox-api.gemini.yahoo.com/v2/rest/advertisersignup'
-    debug_url(url)
-    raise NotImplementedError()
-
-
-def debug(config_path):
-    """Test HTTP API connection"""
-
-    # Load config file
-    with open(config_path, 'r') as file:
-        config = json.load(file)
-        LOGGER.info('Loaded "{}"'.format(file.name))
-
-    # Authenticate
-    session = GeminiSession(
-        client_id=config['username'],
-        access_token=config['password'],
-        session_options=config.get('session', dict()),
-    )
-
-    LOGGER.info(session)
-
-
-def main():
-    logging.basicConfig(level=logging.DEBUG)
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--debug', action='store_true', help="Debug API connection")
-    parser.add_argument('-c', '--config', help='Config file')
-
-    args = parser.parse_args()
-
-    if args.debug:
-        debug(config_path=args.config)
-    else:
-        parser.print_help()
-
-
-if __name__ == '__main__':
-    main()

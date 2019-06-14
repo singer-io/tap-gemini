@@ -38,11 +38,11 @@
     },
     "Product Type": {
       "type": "string",
-      "description": "The merchants own product category string, same value as the \u201cproduct type\u201d field in the product feed."
+      "description": "The merchants own product category string, same value as the product type field in the product feed."
     },
     "Brand": {
       "type": "string",
-      "description": "Brand of the offer, same value as the \u201cbrand\u201d field in the product feed."
+      "description": "Brand of the offer, same value as the brand field in the product feed."
     },
     "Offer Group ID": {
       "type": "integer",

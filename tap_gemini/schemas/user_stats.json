@@ -166,7 +166,7 @@
     },
     "Paid Engagement Rate": {
       "type": "float",
-      "description": "The rate of revenue-bearing Engagements (over Impressions).\u201d"
+      "description": "The rate of revenue-bearing Engagements (over Impressions)."
     },
     "Video Starts": {
       "type": "integer",

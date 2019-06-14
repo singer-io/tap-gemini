@@ -10,7 +10,7 @@ setup(
     classifiers=["Programming Language :: Python :: 3 :: Only"],
     py_modules=["tap_gemini"],
     install_requires=[
-        "singer-python==5.4.1",
+        "singer-python",
         "requests",
         "pytz",
     ],

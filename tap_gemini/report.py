@@ -10,8 +10,8 @@ import time
 
 LOGGER = logging.getLogger(__name__)
 
-YAHOO_REPORT_ENDPOINT = 'reports/custom'
-DATE_FORMAT = '%Y-%m-%d'
+REPORT_ENDPOINT = 'reports'
+CUSTOM_REPORT_ENDPOINT = REPORT_ENDPOINT + '/custom'
 
 
 class GeminiReport:
@@ -21,45 +21,43 @@ class GeminiReport:
     https://developer.yahoo.com/nativeandsearch/guide/reporting/
     """
 
-    def __init__(self, session, report_definition: dict, poll_interval: float = 1.0):
-        self.report_definition = report_definition
+    def __init__(self, session, advertiser_ids: list, cube: str, field_names: list,
+                 start_date: datetime.date, end_date: datetime.date = None, filters: list = None,
+                 poll_interval: float = 1.0):
+        self.advertiser_ids = advertiser_ids
+        self.cube = cube
+        self.field_names = field_names
+        self.start_date = start_date
+        self.end_date = end_date or datetime.date.today()
+        self.filters = filters or list()
         self.session = session
         self.poll_interval = float(poll_interval)
         self.job_id = None
         self.download_url = None
 
-    @staticmethod
-    def build_definition(advertiser_ids: list, cube: str, field_names: list,
-                         start_date: datetime.date, end_date: datetime.date = None,
-                         filters: list = None):
+    @property
+    def definition(self) -> dict:
         """
         Build report definition
 
         https://developer.yahoo.com/nativeandsearch/guide/reporting/
         """
 
-        if end_date is None:
-            end_date = datetime.date.today()
-
-        # Use ISO formatting
-        start_date = start_date.strftime(DATE_FORMAT)
-        end_date = end_date.strftime(DATE_FORMAT)
-
         # Mandatory filters
         _filters = [
             # Accounts
-            {'field': 'Advertiser ID', 'operator': 'IN', 'values': advertiser_ids},
+            {'field': 'Advertiser ID', 'operator': 'IN', 'values': self.advertiser_ids},
             # Time range
-            {'field': 'Day', 'from': start_date, 'operator': 'between', 'to': end_date}
+            {'field': 'Day', 'from': self.start_date.isoformat(), 'operator': 'between',
+             'to': self.end_date.isoformat()}
         ]
-        if filters:
-            # Optional filters
-            _filters.extend(filters)
 
-        # Build report definition
+        # Optional filters
+        _filters.extend(self.filters)
+
         return dict(
-            cube=cube,
-            fields=[dict(field=str(field_name)) for field_name in field_names],
+            cube=self.cube,
+            fields=[dict(field=str(field_name)) for field_name in self.field_names],
             filters=_filters
         )
 
@@ -72,8 +70,8 @@ class GeminiReport:
 
         data = self.session.call(
             method='POST',
-            endpoint=YAHOO_REPORT_ENDPOINT,
-            json=self.report_definition
+            endpoint=CUSTOM_REPORT_ENDPOINT,
+            json=self.definition
         )
 
         # Raise errors
@@ -103,7 +101,7 @@ class GeminiReport:
             else:
                 job_id = self.submit()
 
-        endpoint = "{}/{}".format(YAHOO_REPORT_ENDPOINT, job_id)
+        endpoint = "{}/{}".format(CUSTOM_REPORT_ENDPOINT, job_id)
 
         # Repeatedly poll the reporting server until the data is ready to download
         n_attempts = 0
@@ -184,28 +182,28 @@ class GeminiReport:
         sample request, with “123456” as the first advertiser ID, make a GET call to
         /reports/custom/{JobId}?advertiserId=123456
         """
-        # Iterate over filters in report request
-        for report_filter in self.report_definition['filters']:
-            if report_filter['field'] == 'Advertiser ID':
-                try:
-                    return report_filter['value']
-                except KeyError:
-                    return report_filter['values'][0]
-
-        raise ValueError('No advertiser ID specified')
-
-    @property
-    def end_date(self) -> datetime.date:
-        """The end of the time range for this report"""
-        for report_filter in self.report_definition['filters']:
-            if report_filter['field'] == 'Day':
-                return report_filter['to']
-        raise ValueError('No date range specified')
+        return self.advertiser_ids[0]
 
     @property
     def tags(self) -> dict:
         """Tags to provide meta-data to metric messages"""
         return dict(
-            endpoint=YAHOO_REPORT_ENDPOINT,
-            cube=self.report_definition['cube']
+            endpoint=REPORT_ENDPOINT,
+            cube=self.cube
+        )
+
+    def close_of_business(self, date: datetime.date):
+        """
+        Books Closed
+
+        See: About Books Closed
+        https://developer.yahoo.com/nativeandsearch/guide/reporting/
+        """
+        return self.session.call(
+            endpoint=REPORT_ENDPOINT + '/cob',
+            params=dict(
+                advertiserId=self.advertiser_id,
+                date=date.strftime('%Y%m%d'),
+                cubeName=self.cube
+            )
         )
