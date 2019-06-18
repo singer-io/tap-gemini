@@ -1,6 +1,8 @@
 # coding=utf-8
 """
 Yahoo Gemini API reporting
+
+https://developer.yahoo.com/nativeandsearch/guide/reporting/
 """
 
 import csv
@@ -52,11 +54,20 @@ class GeminiReport:
 
         # Mandatory filters
         _filters = [
+
             # Accounts
-            {'field': 'Advertiser ID', 'operator': 'IN', 'values': self.advertiser_ids},
+            {
+                'field': 'Advertiser ID',
+                'operator': 'IN',
+                'values': self.advertiser_ids
+            },
+
             # Time range
-            {'field': 'Day', 'from': self.start_date.isoformat(), 'operator': 'between',
-             'to': self.end_date.isoformat()}
+            {
+                'field': 'Day',
+                'from': self.start_date.isoformat(), 'operator': 'between',
+                'to': self.end_date.isoformat()
+            }
         ]
 
         # Optional filters
@@ -117,8 +128,8 @@ class GeminiReport:
         while True:
             n_attempts += 1
 
-            # Time delay (minimum one second)
-            secs = (max(1.0, self.poll_interval) + 0.5) ** n_attempts
+            # Time delay (minimum one second) with exponential back-off
+            secs = (max(1.0, self.poll_interval) + 0.2) ** n_attempts
 
             response = self.session.call(
                 endpoint=endpoint,
@@ -172,12 +183,8 @@ class GeminiReport:
         reader = csv.reader(data)
         headers = next(reader)  # list
 
-        # Yield data rows from the CSV stream
+        # Yield data rows (dictionaries) from the CSV stream
         yield from csv.DictReader(data, fieldnames=headers)
-
-    def parse_timestamps(self, timestamp: datetime.datetime) -> datetime.datetime:
-        """Parse timestamps and insert time zone info"""
-        raise NotImplementedError()
 
     @property
     def advertiser_id(self) -> int:
@@ -189,6 +196,7 @@ class GeminiReport:
         sample request, with “123456” as the first advertiser ID, make a GET call to
         /reports/custom/{JobId}?advertiserId=123456
         """
+
         return self.advertiser_ids[0]
 
     @property

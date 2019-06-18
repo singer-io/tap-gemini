@@ -2,8 +2,9 @@
 """
 Yahoo Gemini Native & Search API Objects
 
-https://developer.yahoo.com/nativeandsearch/guide/api-endpoints/
-https://developer.yahoo.com/nativeandsearch/guide/objects.html
+API endpoints: https://developer.yahoo.com/nativeandsearch/guide/api-endpoints/
+
+Account structure objects: https://developer.yahoo.com/nativeandsearch/guide/objects.html
 """
 
 import datetime
@@ -16,7 +17,6 @@ class Object:
     Object base class
 
     https://developer.yahoo.com/nativeandsearch/guide/objects.html
-
 
     The Native & Search API exposes lastUpdateDate and createdDate as read-only fields in API
     responses for all Native & Search API objects. These fields provide UNIX timestamps for when an
@@ -117,3 +117,65 @@ class Campaign(Object):
     """
 
     edge = 'campaign'
+
+
+class AdGroup(Object):
+    """
+    Ad Group
+
+    https://developer.yahoo.com/nativeandsearch/guide/adgroup.html
+    """
+    edge = 'adgroup'
+
+
+class Ad(Object):
+    """
+    Ad
+
+    https://developer.yahoo.com/nativeandsearch/guide/ad.html
+    """
+    edge = 'ad'
+
+
+class Keyword(Object):
+    """
+    Keyword
+
+    https://developer.yahoo.com/nativeandsearch/guide/keyword.html
+    """
+    edge = 'keyword'
+
+
+class TargetingAttribute(Object):
+    """
+    Targeting Attribute
+    """
+    edge = 'targetingattribute'
+
+
+class AdExtensions(Object):
+    """
+    Ad Extensions
+    """
+    edge = 'adextension'
+
+
+class SharedSitelink(Object):
+    """
+    Shared Sitelink
+    """
+    edge = 'sharedsitelink'
+
+
+class SharedSitelinkSetting(Object):
+    """
+    Shared Sitelink Setting
+    """
+    edge = 'sharedsitelink'
+
+
+class AdSiteSetting(Object):
+    """
+    Ad Site Setting
+    """
+    edge = 'adsitesetting'

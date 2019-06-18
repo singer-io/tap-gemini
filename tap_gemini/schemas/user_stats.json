@@ -220,7 +220,7 @@
       "description": "Total spend associated to an ad extension."
     },
     "Average Position": {
-      "type": "integer",
+      "type": "number",
       "description": "The average position of the ad."
     },
     "Landing Page Type": {

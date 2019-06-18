@@ -3,14 +3,13 @@
 """
 Singer Tap for Yahoo Gemini
 
-Singer:
-
-    - All timestamps must use the RFC3339 standard.
-
 Gemini API documentation:
 
     - https://developer.yahoo.com/nativeandsearch/guide/
-    - https://developer.yahoo.com/nativeandsearch/guide/reporting/
+
+Singer:
+
+    - All timestamps must use the RFC3339 standard.
 """
 
 import datetime
@@ -33,8 +32,14 @@ LOGGER = singer.get_logger()
 OBJECT_MAP = dict(
     advertiser=tap_gemini.api.Advertiser,
     campaign=tap_gemini.api.Campaign,
-    # TODO Implement further objects
-    # adgroup=api.AdGroup
+    adgroup=tap_gemini.api.AdGroup,
+    ad=tap_gemini.api.Ad,
+    keyword=tap_gemini.api.Keyword,
+    targetingattribute=tap_gemini.api.TargetingAttribute,
+    adextensions=tap_gemini.api.AdExtensions,
+    sharedsitelink=tap_gemini.api.SharedSitelink,
+    sharedsitelinksetting=tap_gemini.api.SharedSitelinkSetting,
+    adsitesetting=tap_gemini.api.AdSiteSetting,
 )
 
 
@@ -208,13 +213,45 @@ def build_report_params(config: dict, stream, start_date: datetime.datetime,
     if end_date is None:
         end_date = TODAY
 
+    advertiser_ids = list(config['advertiser_ids'])
+
     return dict(
-        advertiser_ids=list(config['advertiser_ids']),
+        advertiser_ids=advertiser_ids,
         cube=str(stream.stream),
         field_names=list(stream.schema.properties.keys()),
         start_date=datetime.date(start_date.year, start_date.month, start_date.day),
         end_date=datetime.date(end_date.year, end_date.month, end_date.day),
     )
+
+
+def filter_schema(schema: dict, metadata: list) -> dict:
+    """
+    Select fields using meta-data
+    """
+
+    for item in metadata:
+        try:
+            if item['breadcrumb'][0] == 'properties':
+                property_name = item['breadcrumb'][1]
+
+                # Get metadata for this property
+                selected = item['metadata'].get('selected', True)
+                inclusion = item['metadata'].get('inclusion', 'available')
+
+                # Some fields are mandatory
+                if inclusion == 'automatic':
+                    selected = True
+
+                # Remove if not selected
+                if not selected or (inclusion == 'unsupported'):
+                    del schema.properties[property_name]
+
+                    singer.log_debug('Removed property "%s"', property_name)
+
+        except IndexError:
+            pass
+
+    return schema
 
 
 def get_books_closed(rep: tap_gemini.report.GeminiReport) -> datetime.datetime:
@@ -256,47 +293,6 @@ def get_books_closed(rep: tap_gemini.report.GeminiReport) -> datetime.datetime:
     return bookmark_timestamp
 
 
-def filter_schema(schema: dict, metadata: list) -> dict:
-    """Select fields using meta-data"""
-    for item in metadata:
-        try:
-            if item['breadcrumb'][0] == 'properties':
-                property_name = item['breadcrumb'][1]
-
-                # Get metadata for this property
-                selected = item['metadata'].get('selected', True)
-                inclusion = item['metadata'].get('inclusion', 'available')
-
-                # Some fields are mandatory
-                if inclusion == 'automatic':
-                    selected = True
-
-                # Remove if not selected
-                if not selected or (inclusion == 'unsupported'):
-                    del schema.properties[property_name]
-
-                    singer.log_debug('Removed property "%s"', property_name)
-
-        except IndexError:
-            pass
-
-    return schema
-
-
-def row_to_json(row: dict) -> dict:
-    if not isinstance(row, dict):
-        raise TypeError(type(row))
-
-    new_row = dict()
-    for key, value in row.items():
-        if isinstance(value, (datetime.datetime, datetime.date)):
-            value = value.isoformat()
-
-        new_row[key] = value
-
-    return new_row
-
-
 def transform_property(value, data_type: str, string_format: str = None):
     """Cast data types, as instructed by the schema"""
 
@@ -326,11 +322,12 @@ def transform_property(value, data_type: str, string_format: str = None):
 
 def transform_record(record: dict, schema: dict) -> dict:
     """
-    Cast the data types of each field (property) of a record according to the schema definition.
+    Cast the data types of each field (property) of a record according to the schema definition,
+    ready for output using JSON schema.
 
     :param record: Input record
     :param schema: Schema definition of data types.
-    :return:
+    :return: Record with data types safe for output to JSON schema
     """
 
     # Build a new dictionary, rather than mutating the input dictionary
@@ -347,7 +344,6 @@ def transform_record(record: dict, schema: dict) -> dict:
                 value=value,
                 data_type=prop['type'],
                 string_format=prop.get('format')
-
             )
 
         # Show which property has caused the problem
@@ -434,12 +430,16 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
 
         # Initialise Gemini HTTP API session
         session = tap_gemini.transport.GeminiSession(
+            # Mandatory
             client_id=config['username'],
-            api_version=config['api_version'],
             client_secret=config['password'],
             refresh_token=config['refresh_token'],
-            user_agent=config['user_agent'],
-            session_options=config.get('session', dict())
+
+            # Optional
+            api_version=config.get('api_version'),
+            user_agent=config.get('user_agent'),
+            session_options=config.get('session', dict()),
+            sandbox=config.get('sandbox')
         )
 
         # Create data stream
@@ -490,7 +490,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
             except KeyError:
                 # Default time window: just use specified start/end date
                 time_windows = (
-                    (start_date, None),
+                    (start_date, TODAY),
                 )
 
             # Each report is run within a single time window
@@ -514,8 +514,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                 write_records(
                     stream=stream,
                     rows=rep.stream(),
-                    tags=rep.tags,
-                    limit=5
+                    tags=rep.tags
                 )
 
                 # Bookmark the progress through the stream

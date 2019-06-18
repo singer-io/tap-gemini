@@ -20,7 +20,7 @@ To install `tap-gemini` in Stitch, you need to create an API application and gen
 credentials. See the [authentication documentation](https://developer.yahoo.com/nativeandsearch/guide/navigate-the-api/authentication/) on the Oath 
 website for instructions, including their [OAuth 2.0 guide](https://developer.yahoo.com/oauth2/guide/).
 
-Enter the client ID as the username and the refresh token as the password.
+Enter the client ID as the username, client ID as the password and the refresh token.
 
 ## Python
 
@@ -53,18 +53,46 @@ To output the data to a CSV file, pipe the data stream into [target-csv](https:/
 .virtualenvs/target-csv/bin/target-csv
 ```
 
+### Configuration
+
+The options in the configuration file are described below.
+
+#### Mandatory settings
+
+These settings must be specified:
+
+* `start_date`: The lower bound of the historical load time range
+* `username`: the OAuth client ID
+* `password`: the OAuth client secret
+* `refresh_token`: the OAuth refresh token
+* `advertiser_ids`: List of [advertiser](https://developer.yahoo.com/nativeandsearch/guide/advertiser.html) (account) ID numbers
+
+#### Optional settings
+
+* `api_version`: The [API version](https://developer.yahoo.com/nativeandsearch/guide/navigate-the-api/versioning/) to use
+* `session`: Options for the [HTTP session](https://2.python-requests.org//en/master/user/advanced/#session-objects) such as headers and proxies with be passed into 
+the `requests.Session` as keyword arguments.
+* `sandbox`: Use the API [testing environment](https://developer.yahoo.com/nativeandsearch/guide/navigate-the-api/testing/)
+* `poll_interval`: The number of seconds (minimum: 1.0) between poll attempts when waiting for a 
+report to by ready for download. 
+
 ## Replication
 
 Each incremental report run begins at the timestamp when books were marked closed (i.e. when no 
 further changes to the data are written.)
 
 For historic data loads, the reports will run over the largest possible time frame. Some reports 
-have a limited time range as detailed below:
+have a limited time range as detailed below, where the "Days" column shows the largest available 
+number of days prior to the current calendar date:
 
-* performance_stats: 15 days
-* product_ads: 400 days
-* site_performance_stats: 400 days
-* keyword_stats: 750 days
+
+| Table                  | Days |
+|------------------------|------|
+| performance_stats      | 15   |
+| slot_performance_stats | 15   |
+| product_ads            | 400  |
+| site_performance_stats | 400  |
+| keyword_stats          | 750  |
 
 ## Table Schemas
 
