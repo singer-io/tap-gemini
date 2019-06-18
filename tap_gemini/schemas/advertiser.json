@@ -1,8 +1,6 @@
 {
   "type": [
-    "string",
-    "integer",
-    "date-time"
+    "object"
   ],
   "additionalProperties": false,
   "description": "An advertiser is an entity that manages campaigns in the Native & Search API. It has settings such as contact information and billing details, and is able to manage campaigns and view reports for those campaigns. The Native & Search ID you use to log in to Ad Manager can be associated with one or more advertisers.",
@@ -11,10 +9,10 @@
       "type": "integer"
     },
     "advertiserName": {
-      "type": "integer"
+      "type": "string"
     },
     "timezone": {
-      "type": "integer"
+      "type": "string"
     },
     "currency": {
       "type": "string"
@@ -26,13 +24,15 @@
       "type": "string"
     },
     "createdDate": {
-      "type": "date-time"
+      "type": "string",
+      "format": "date-time"
     },
     "language": {
       "type": "string"
     },
     "lastUpdateDate": {
-      "type": "date-time"
+      "type": "string",
+      "format": "date-time"
     },
     "managedBy": {
       "type": "string"
@@ -47,6 +47,9 @@
       "type": "string"
     },
     "webSiteUrl": {
+      "type": "string"
+    },
+    "vatId": {
       "type": "string"
     }
   }

@@ -76,7 +76,7 @@
       "description": "The average CPC bid value."
     },
     "Average CPM": {
-      "type": "integer",
+      "type": "number",
       "description": "The average CPM bid value."
     },
     "Fact Conversion Counting": {

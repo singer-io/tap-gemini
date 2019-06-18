@@ -161,10 +161,12 @@ def discover() -> singer.Catalog:
         stream_key_properties = list()
 
         # Append metadata (if exists)
+        # TODO Use helper functions
+        # TODO https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md#singer-python-helper-functions
         stream_metadata.extend(metadata.get(schema_name, list()))
         stream_key_properties.extend(key_properties.get(schema_name, list()))
 
-        # Create and add catalog entry
+        # Create catalog entry
         catalog_entry = singer.catalog.CatalogEntry()
 
         catalog_entry.stream = schema_name
@@ -226,48 +228,29 @@ def get_books_closed(rep: tap_gemini.report.GeminiReport) -> datetime.datetime:
     # Default to start date: if books are closed then re-run the report in the future
     # from this same beginning date.
     bookmark_timestamp = cast_date_to_datetime(rep.start_date)
-    bookmark_date = bookmark_timestamp.date()
 
     # Find when "close of business" occurred (i.e. most recent date for which books
     # are closed, within the time range of the report.)
     check_date = cast_date_to_datetime(rep.end_date)
 
+    # Don't bother starting today, go back to yesterday
+    if check_date == TODAY:
+        check_date -= datetime.timedelta(days=1)
+
     # Find when books are closed, iterating back through time
     while True:
-        try:
-            books_status = rep.close_of_business(date=check_date)
+        books_closed_timestamp = rep.are_books_closed(date=check_date)
 
-        except tap_gemini.report.BooksClosedNotImplementedError:
+        # Successfully found when books closed
+        if books_closed_timestamp is not None:
+            bookmark_timestamp = books_closed_timestamp
             break
 
-        books_closed = books_status['isMonthClosed'] | books_status['isDayClosed']
-
-        LOGGER.info('CLOSE_OF_BUSINESS: %s %s (%s%%)', check_date.date(),
-                    books_closed, books_status.get('dayProgressPercent'))
-
-        # Books are closed to the end of the month
-        if books_status['isMonthClosed']:
-            bookmark_date = check_date.replace(
-                day=1,
-                month=check_date.month + 1
-            )
-            LOGGER.info('CLOSE_OF_BUSINESS: Month starting %s is closed',
-                        check_date.date().replace(day=1))
-
-        elif books_status['isDayClosed']:
-            bookmark_date = check_date.date()
-
-        if books_closed:
-            bookmark_timestamp = datetime.datetime.combine(
-                date=bookmark_date,
-                time=datetime.time(0, tzinfo=pytz.timezone(
-                    books_status['advertiserTimezone']))
-            )
-
+        # Go back through time by one day
         check_date -= datetime.timedelta(days=1)
 
         # Stop looping
-        if books_closed | (check_date < bookmark_timestamp):
+        if check_date < bookmark_timestamp:
             break
 
     return bookmark_timestamp
@@ -314,6 +297,33 @@ def row_to_json(row: dict) -> dict:
     return new_row
 
 
+def transform_property(value, data_type: str, string_format: str = None):
+    """Cast data types, as instructed by the schema"""
+
+    # Missing values are null
+    if value is None:
+        return
+
+    # Cast data type according to schema
+    if data_type == 'string':
+        value = str(value)
+
+        # Parse dates
+        if string_format == 'date-time':
+            value = singer.utils.strptime_to_utc(value).isoformat()
+
+    elif data_type == 'integer':
+        value = int(value)
+
+    elif data_type == 'number':
+        value = float(value)
+
+    else:
+        raise ValueError('Unknown data type', data_type)
+
+    return value
+
+
 def transform_record(record: dict, schema: dict) -> dict:
     """
     Cast the data types of each field (property) of a record according to the schema definition.
@@ -332,23 +342,13 @@ def transform_record(record: dict, schema: dict) -> dict:
         # Get the property definition from the schema
         prop = schema['properties'][key]
 
-        # Cast data types, as instructed by the schema
         try:
-            if prop['type'] == 'string':
-                value = str(value)
+            value = transform_property(
+                value=value,
+                data_type=prop['type'],
+                string_format=prop.get('format')
 
-                # Parse dates
-                if prop.get('format') == 'date-time':
-                    value = singer.utils.strptime_to_utc(value).isoformat()
-
-            elif prop['type'] == 'integer':
-                value = int(value)
-
-            elif prop['type'] == 'number':
-                value = float(value)
-
-            else:
-                raise ValueError('Unknown data type', prop['type'])
+            )
 
         # Show which property has caused the problem
         except ValueError:
@@ -360,20 +360,12 @@ def transform_record(record: dict, schema: dict) -> dict:
     return transformed_record
 
 
-def write_records(stream: singer.catalog.CatalogEntry, rows: iter, tags=None, limit: int = 0):
+def write_records(stream: singer.catalog.CatalogEntry, rows: iter, tags=None):
     """Wrapper for singer utils"""
-
-    LOGGER.info('Writing records for stream "%s"', stream.tap_stream_id)
 
     schema = stream.schema.to_dict()
     # metadata = singer.metadata.to_map(stream.metadata)
     time_extracted = singer.utils.now()
-
-    # Peek at the top N rows
-    if limit:
-        import itertools
-        rows = itertools.islice(rows, 0, limit)
-        LOGGER.warning('Data limited to %s rows', limit)
 
     with singer.metrics.Timer(metric='job_timer', tags=tags):
         with singer.metrics.Counter(metric='record_count', tags=tags) as counter:
@@ -381,7 +373,7 @@ def write_records(stream: singer.catalog.CatalogEntry, rows: iter, tags=None, li
 
                 if not isinstance(row, dict):
                     LOGGER.error(row)
-                    raise TypeError('ROW {} is not dict'.format(type(row)))
+                    raise TypeError('ROW: Type {} is not dict'.format(type(row)))
 
                 # Disabled because this seems to return a string, rather than a dictionary
                 # Transform data row for JSON output
@@ -394,7 +386,7 @@ def write_records(stream: singer.catalog.CatalogEntry, rows: iter, tags=None, li
                 record = transform_record(row, schema=schema)
 
                 if not isinstance(record, dict):
-                    raise TypeError('RECORD {} is not dict'.format(type(record)))
+                    raise TypeError('RECORD: Type {} is not dict'.format(type(record)))
 
                 # Emit record
                 singer.write_record(
@@ -461,8 +453,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                 rows=model.list_data(session=session),
                 tags=dict(
                     object=stream_id
-                ),
-                limit=5
+                )
             )
 
         else:
@@ -470,7 +461,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
 
             # Use bookmark to continue where we left off
             bookmark = bookmarks.get(stream_id, dict())
-            start_date = bookmark.get('end_date', start_date)
+            start_date = bookmark.get(tap_gemini.settings.BOOKMARK_KEY, start_date)
 
             # Define time range
             try:
@@ -513,29 +504,29 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                 )
 
                 # Define the report
-                report = tap_gemini.report.GeminiReport(
+                rep = tap_gemini.report.GeminiReport(
                     session=session,
-                    poll_interval=config.get('poll_interval'),  # default: one second
+                    poll_interval=config.get('poll_interval'),
                     **report_params
                 )
 
                 # Emit records
                 write_records(
                     stream=stream,
-                    rows=report.stream(),
-                    tags=report.tags,
+                    rows=rep.stream(),
+                    tags=rep.tags,
                     limit=5
                 )
 
                 # Bookmark the progress through the stream
                 # Get the time when the data is complete (no further changes will occur)
-                bookmark_timestamp = get_books_closed(rep=report)
+                bookmark_timestamp = get_books_closed(rep=rep)
 
                 # Preserve state for each stream
                 singer.write_bookmark(
                     state=state,
                     tap_stream_id=stream_id,
-                    key='end_date',
+                    key=tap_gemini.settings.BOOKMARK_KEY,
                     val=cast_date_to_datetime(bookmark_timestamp).isoformat()
                 )
 
@@ -553,6 +544,7 @@ def main():
     if args.discover:
         catalog = discover()
         print(json.dumps(catalog.to_dict(), indent=2))
+
     # Otherwise run in sync mode
     else:
         if args.catalog:
@@ -561,7 +553,7 @@ def main():
             catalog = discover()
 
         if not isinstance(catalog, singer.Catalog):
-            raise ValueError('Catalogue is not of type singer.Catalog')
+            raise TypeError('Type is not singer.Catalog')
 
         sync(args.config, args.state, catalog)
 

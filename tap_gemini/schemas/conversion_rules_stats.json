@@ -8,19 +8,19 @@
   "properties": {
     "Advertiser ID": {
       "type": "integer",
-      "description": "The ID of the advertiser."
+      "description": "The identifier of the advertiser."
     },
     "Campaign ID": {
       "type": "integer",
-      "description": "The ID of the campaign."
+      "description": "The identifier of the campaign."
     },
     "Ad Group ID": {
       "type": "integer",
-      "description": "The ID of the ad group."
+      "description": "The identifier of the ad group."
     },
     "Rule ID": {
       "type": "integer",
-      "description": "The id associated with the conversion rule."
+      "description": "The identifier associated with the conversion rule."
     },
     "Rule Name": {
       "type": "string",
@@ -36,7 +36,7 @@
     },
     "Keyword ID": {
       "type": "integer",
-      "description": "The Id of the keyword. This will be blank for Native Campaigns."
+      "description": "The identifier of the keyword. This will be blank for Native Campaigns."
     },
     "Keyword Value": {
       "type": "string",
@@ -53,7 +53,7 @@
     "Day": {
       "type":"string",
       "format": "date-time",
-      "description": "The date in in YYYY-MM-DD format. Must be included in every query."
+      "description": "The calendar date."
     },
     "Post View Conversions": {
       "type": "integer",

@@ -196,6 +196,10 @@
     "Fact Conversion Counting": {
       "type": "string",
       "description": "The way your conversions were counted for the campaign during the report time range (ALL_PER_INTERACTION, ONE_PER_INTERACTION)."
+    },
+    "Hour": {
+      "type": "integer",
+      "description": "Hour of day"
     }
   }
 }

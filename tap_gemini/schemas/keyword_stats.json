@@ -8,23 +8,23 @@
   "properties": {
     "Advertiser ID": {
       "type": "integer",
-      "description": "The ID of the advertiser."
+      "description": "The identifier of the advertiser."
     },
     "Campaign ID": {
       "type": "integer",
-      "description": "The ID of the campaign."
+      "description": "The identifier of the campaign."
     },
     "Ad Group ID": {
       "type": "integer",
-      "description": "The ID of the ad group."
+      "description": "The identifier of the ad group."
     },
     "Ad ID": {
       "type": "integer",
-      "description": "The ID of the ad."
+      "description": "The identifier of the ad."
     },
     "Keyword ID": {
       "type": "integer",
-      "description": "The ID of the keyword. Must be included in any query."
+      "description": "The identifier of the keyword."
     },
     "Destination URL": {
       "type": "string",
@@ -33,7 +33,7 @@
     "Day": {
       "type":"string",
       "format": "date-time",
-      "description": "The date in YYYY-MM-DD format. Must be included in every query."
+      "description": "The calendar date."
     },
     "Device Type": {
       "type": "string",

@@ -24,5 +24,14 @@
       "properties",
       "Advertiser ID"
     ]
+  },
+  {
+    "metadata": {
+      "inclusion": "automatic"
+    },
+    "breadcrumb": [
+      "properties",
+      "Keyword ID"
+    ]
   }
 ]

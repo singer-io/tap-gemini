@@ -8,6 +8,8 @@ import datetime
 import logging
 import time
 
+import pytz
+
 LOGGER = logging.getLogger(__name__)
 
 REPORT_ENDPOINT = 'reports'
@@ -197,22 +199,37 @@ class GeminiReport:
             cube=self.cube
         )
 
-    def close_of_business(self, date: datetime.date):
+    def close_of_business(self, date: datetime.date) -> dict:
         """
-        Books Closed
+        Get the status of the books (are they closed for the day?)
 
         See: About Books Closed
         https://developer.yahoo.com/nativeandsearch/guide/reporting/
         """
-        try:
-            return self.session.call(
-                endpoint=REPORT_ENDPOINT + '/cob',
-                params=dict(
-                    advertiserId=self.advertiser_id,
-                    date=date.strftime('%Y%m%d'),
-                    cubeName=self.cube
-                )
+
+        endpoint = REPORT_ENDPOINT + '/cob'
+        date_string = date.strftime('%Y%m%d')
+
+        def _close_of_business(cube: str = None) -> dict:
+            """Implement this function"""
+
+            # Mandatory parameters
+            params = dict(
+                advertiserId=self.advertiser_id,
+                date=date_string,
             )
+
+            # Optional parameter
+            if cube is not None:
+                params['cubeName'] = cube
+
+            return self.session.call(
+                endpoint=endpoint,
+                params=params
+            )
+
+        try:
+            return _close_of_business(cube=self.cube)
 
         except RuntimeError as e:
             error = e.args[0]
@@ -220,5 +237,34 @@ class GeminiReport:
                 if error['message'] == 'Invalid cubeName passed':
                     LOGGER.warning('Cube "%s" is not in the list of currently supported reports',
                                    self.cube)
-                    raise BooksClosedNotImplementedError(self.cube) from e
+
+                    # Call the endpoint without specifying a cube
+                    LOGGER.info('Retrying close of business for "%s" with no cube specified', date)
+                    return _close_of_business()
             raise
+
+    def are_books_closed(self, date: datetime.date) -> datetime.datetime:
+        """
+        Check whether books are closed for the specified date.
+
+        :returns: Timezone-aware timestamp for the time when the books were closed.
+        """
+
+        status = self.close_of_business(date)
+
+        books_closed = status['isDayClosed'] | status['isMonthClosed']
+
+        # Completion percentage (what fraction of the books are closed)
+        books_closed_ratio = status.get('dayProgressPercent')
+
+        # The completion percentage is not provided if no cube is specified
+        if books_closed_ratio is None:
+            books_closed_ratio = 100 if books_closed else 0
+
+        LOGGER.info('CLOSE_OF_BUSINESS: %s %s (%s%%)', date, books_closed, books_closed_ratio)
+
+        # Build timestamp
+        return datetime.datetime.combine(
+            date=date,
+            time=datetime.time(0, tzinfo=pytz.timezone(status['advertiserTimezone']))
+        )

@@ -1,30 +1,29 @@
 {
   "type": [
-
-
     "object"
   ],
+  "description": "https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#product-ad-performance-stats",
   "additionalProperties": false,
   "properties": {
     "Advertiser ID": {
       "type": "integer",
-      "description": "The ID of the advertiser."
+      "description": "The identifier of the advertiser."
     },
     "Campaign ID": {
       "type": "integer",
-      "description": "The ID of the campaign."
+      "description": "The identifier of the campaign."
     },
     "Ad Group ID": {
       "type": "integer",
-      "description": "The ID of the ad group."
+      "description": "The identifier of the ad group."
     },
     "Ad ID": {
       "type": "integer",
-      "description": "The ID of the ad."
+      "description": "The identifier of the ad."
     },
-    "Keyword id": {
-      "type": "string",
-      "description": "The id of the keyword."
+    "Keyword ID": {
+      "type": "integer",
+      "description": "The identifier of the keyword."
     },
     "Delivered Match Type": {
       "type": "string",
@@ -45,7 +44,7 @@
     "Day": {
       "type": "string",
       "format": "date-time",
-      "description": "The date in in YYYY-MM-DD format. Must be included in every query."
+      "description": "The calendar date."
     },
     "Impressions": {
       "type": "integer",

@@ -5,70 +5,125 @@ following the [Singer spec](https://github.com/singer-io/getting-started/blob/ma
 
 This tap:
 
-- Pulls raw data from [Yahoo Gemini reporting API](https://developer.yahoo.com/nativeandsearch/guide/reporting/)
-- Extracts the following [reporting cubes](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/):
-    - performance_stats
-    - keyword_stats
-    - search_stats
-- Outputs the schema for each resource
-- Incrementally pulls data based on the input state
+* Pulls raw data from [Yahoo Gemini reporting API](https://developer.yahoo.com/nativeandsearch/guide/reporting/)
+* Extracts the [reporting cubes](https://developer.yahoo
+.com/nativeandsearch/guide/reporting/cubes/) detailed below
+* Outputs the schema for each resource
+* Incrementally pulls data based on the input state
 
-## Connecting
+# Connecting
 
-### Requirements
+## Requirements
 
-To set up `tap-gemini` in Stitch, you need:
+To install `tap-gemini` in Stitch, you need to create an API application and generate an OAuth 2.0 
+client ID and refresh token are required. See the [authetnication documentation](https://developer.yahoo.com/nativeandsearch/guide/navigate-the-api/authentication/) on the Oath 
+website.
 
-_For each requirement:_
--  **The requirement**. Brief explanation of the requirement. Include links to if relevant.
+## Setup
 
-### Setup
+Enter the client ID as the username and the refresh token as the password.
 
-The steps necessary to set up the tap, including instructions for obtaining API credentials, configuring account settings, granting user permissions, etc. if necessary.
+## Usage
 
-### Usage
+Follow the instructions below to use the tap as a Python packag.
+
+### Installation
+
+Create a virtual environment and install the package using `pip`. These instructions are bash 
+commands that will work on Unix-based platforms.
 
 ```bash
-python .
+python3 -m venv ~/.virtualenvs/tap-gemini
+source ~/.virtualenvs/tap-gemini/bin/activate
+pip install tap-gemini
+deactivate
+```
+
+### Execution
+
+Run the following command to run the tap.
+
+```bash
+~/.virtualenvs/tap-gemini/bin/tap-gemini --config ~/my_config_file.json
+```
+
+To output the data to a CSV file, pipe the data stream into [target-csv](https://github.com/singer-io/target-csv):
+
+```bash
+~/.virtualenvs/tap-gemini/bin/tap-gemini --config ~/my_config_file.json | ~/
+.virtualenvs/target-csv/bin/target-csv
 ```
 
 ## Replication
 
-If pertinent, include details about how the tap replicates data and/or uses the API. As Stitch users are billed for total rows replicated, any info that can shed light on the number of rows replicated or reduce usage is considered necessary.
+Each incremental report run begins at the timestamp when books were marked closed (i.e. when no 
+further changes to the data are written.)
 
-Examples:
+For historic data loads, the reports will run over the largest possible time frame. Some reports 
+have a limited time range as detailed below:
 
-- Replication strategy - attribution/conversion windows ([Google AdWords](https://www.stitchdata.com/docs/integrations/saas/google-adwords#data-extraction-conversion-window)), event-based updates, etc.
-- API usage, especially for services that enforce rate limits or quotas, like Salesforce or [Marketo](https://www.stitchdata.com/docs/integrations/saas/marketo#marketo-daily-api-call-limits)
+* performance_stats: 15 days
+* product_ads: 400 days
+* site_performance_stats: 400 days
+* keyword_stats: 750 days
 
 ## Table Schemas
 
-For **each** table that the tap produces, provide the following:
+Most tables have the following primary key columns:
 
-- Table name: 
-- Description:
-- Primary key column(s): 
-- Replicated fully or incrementally _(uses a bookmark to maintain state)_:
-- Bookmark column(s): _(if replicated incrementally)_ 
-- Link to API endpoint documentation:
+* Advertiser ID
+* Day
 
-# Unsupported fields
+The table schemas are detailed below.
 
-The following fields have been excluded from the schema because they are incompatible with other 
-fields. This could probably be fixed by definiting meta-data exclusions.
+### Reports
 
+The following reporting cubes are implemented:
+
+* [adjustment_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#product-ad-performance-stats)
+    - Description: This cube provides performance metrics for over delivery adjustments for spend, which are not available in other cubes.
+    - Primary key columns:
+        * Advertiser ID
+        * Day
+    - Replication: Incremental
+    - Bookmark column(s): Day
+* [ad_extension_details](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#ad-extension-details)
+* [call_extension_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#call-extension-stats)
+* [campaign_bid_performance_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#campaign-bid-performance-stats)
+* [conversion_rules_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#conversion-rules-stats)
+* [domain_performance_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#domain-performance-stats)
+* [keyword_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#keyword-stats)
+* [performance_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#performance-stats)
+    - Description: This cube has performance stats for all levels down to the ad level. It is recommended to use this cube when querying for native ads campaign data. The cube does not include keyword level metrics. Data for both search and native campaigns is provided - you can use the “Source” field to filter for a specific channel. Note that the cube does not include any over delivery spend adjustments which are available in the adjustment_stats cube.
+    - Primary key columns:
+        * Advertiser ID
+        * Day
+    - Replication: Incremental
+    - Bookmark column: Day
+* [product_ads](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#product-ads)
 * [product_ad_performance_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#product-ad-performance-stats)
-  - `Hour`
+* [search_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#search-stats)
+* [site_performance_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#site-performance-stats)
+* [slot_performance_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#slot-performance-stats)
+* [structured_snippet_extension_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#structured-snippet-extension-stats)
+* [user_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#user-stats)
+
+### Objects
+
+The following [account structure objects](https://developer.yahoo.com/nativeandsearch/guide/objects.html) are implemented.
+
+* [advertiser](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#advertiser)
+* [campaign](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#campaign)
+
+### Unsupported fields
+
+Some fields have been excluded from the schema (i.e. the meta-data inclusion is set to 
+`unsupported`) because they are incompatible with other fields. This could probably be fixed by 
+defining meta-data exclusions that depend on other fields.
 
 ## Troubleshooting / Other Important Info
 
 All dates and times use the `advertiser` time zone.
-
-One can debug the API HTTP connection by running the following command:
-
-```bash
-python tap_gemini\transport.py --debug
-```
 
 ---
 

@@ -1,23 +1,20 @@
 {
   "type": [
-    "string",
-    "integer",
-
-    "array",
-    "object",
-    "number"
+    "object"
   ],
   "additionalProperties": false,
-  "description": "See description: https://developer.yahoo.com/nativeandsearch/guide/campaigns.html",
+  "description": "See: https://developer.yahoo.com/nativeandsearch/guide/campaigns.html",
   "properties": {
     "id": {
       "type": "integer"
     },
     "createdDate": {
-      "type": "date-time"
+      "type": "string",
+      "format": "date-time"
     },
     "lastUpdateDate": {
-      "type": "date-time"
+      "type": "string",
+      "format": "date-time"
     },
     "status": {
       "type": "string"
@@ -26,7 +23,7 @@
       "type": "string"
     },
     "conversionRuleIds": {
-      "type": "array"
+      "type": "string"
     },
     "campaignName": {
       "type": "string"
@@ -38,7 +35,7 @@
       "type": "integer"
     },
     "conversionRuleConfig": {
-      "type": "object"
+      "type": "string"
     },
     "subChannelModifier": {
       "type": "number"

@@ -28,3 +28,5 @@ MAX_LOOK_BACK_DAYS = dict(
     site_performance_stats=400,
     keyword_stats=750,
 )
+
+BOOKMARK_KEY = 'start_date'
