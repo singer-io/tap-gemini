@@ -17,7 +17,7 @@
       "type": "integer"
     },
     "currency": {
-      "type": "integer"
+      "type": "string"
     },
     "billingCountry": {
       "type": "string"

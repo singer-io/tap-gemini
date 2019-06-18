@@ -54,6 +54,14 @@ For **each** table that the tap produces, provide the following:
 
 ---
 
+# Unsupported fields
+
+The following fields have been excluded from the schema because they are incompatible with other 
+fields. This could probably be fixed by definiting meta-data exclusions.
+
+* [product_ad_performance_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#product-ad-performance-stats)
+  - `Hour`
+
 ## Troubleshooting / Other Important Info
 
 All dates and times use the `advertiser` time zone.

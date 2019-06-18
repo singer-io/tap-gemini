@@ -72,8 +72,8 @@
       "description": "The total number of conversions, includes both post click and post view conversions. For app install campaigns the default conversion windows are 7 days post-click and 1 day post view. For website conversions, the default windows are 30 days post-click and 2 days post-view."
     },
     "Cost": {
-      "type": "integer",
-      "description": ""
+      "type": "number",
+      "description": "Marketing spend"
     },
     "CTR": {
       "type": "number",

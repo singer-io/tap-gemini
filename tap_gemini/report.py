@@ -199,11 +199,21 @@ class GeminiReport:
         See: About Books Closed
         https://developer.yahoo.com/nativeandsearch/guide/reporting/
         """
-        return self.session.call(
-            endpoint=REPORT_ENDPOINT + '/cob',
-            params=dict(
-                advertiserId=self.advertiser_id,
-                date=date.strftime('%Y%m%d'),
-                cubeName=self.cube
+        try:
+            return self.session.call(
+                endpoint=REPORT_ENDPOINT + '/cob',
+                params=dict(
+                    advertiserId=self.advertiser_id,
+                    date=date.strftime('%Y%m%d'),
+                    cubeName=self.cube
+                )
             )
-        )
+
+        except RuntimeError as e:
+            error = e.args[0]
+            if error['code'] == 'E40000_INVALID_INPUT':
+                if error['message'] == 'Invalid cubeName passed':
+                    LOGGER.warning('Cube "%s" is not in the list of currently supported reports',
+                                   self.cube)
+                    return
+            raise

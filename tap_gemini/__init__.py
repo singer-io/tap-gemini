@@ -53,6 +53,7 @@ OBJECT_MAP = dict(
 MAX_WINDOW_DAYS = dict(
     search_stats=15,
     performance_stats=15,
+    slot_performance_stats=15,
     keyword_stats=400,
     product_ads=400,
     site_performance_stats=400,
@@ -62,9 +63,9 @@ MAX_WINDOW_DAYS = dict(
 # This prevents ERROR_CODE:10002 Max look back window exceeded expected
 MAX_LOOK_BACK_DAYS = dict(
     performance_stats=15,
-    keyword_stats=750,
     product_ads=400,
     site_performance_stats=400,
+    keyword_stats=750,
 )
 
 
@@ -226,12 +227,16 @@ def get_selected_streams(catalog: singer.Catalog) -> list:
 
 
 def build_report_params(config: dict, stream, start_date: datetime.datetime,
-                        end_date: datetime.datetime) -> dict:
+                        end_date: datetime.datetime = None) -> dict:
     """
     Convert a JSON schema to Gemini report parameters.
 
     JSON schema: http://json-schema.org/
     """
+
+    if end_date is None:
+        end_date = TODAY
+
     return dict(
         advertiser_ids=list(config['advertiser_ids']),
         cube=str(stream.stream),
@@ -331,10 +336,13 @@ def transform_record(record: dict, schema: dict) -> dict:
 def write_records(stream: singer.catalog.CatalogEntry, rows: iter, tags=None, limit: int = 0):
     """Wrapper for singer utils"""
 
+    LOGGER.info('Writing records for stream "%s"', stream.tap_stream_id)
+
     schema = stream.schema.to_dict()
-    metadata = singer.metadata.to_map(stream.metadata)
+    # metadata = singer.metadata.to_map(stream.metadata)
     time_extracted = singer.utils.now()
 
+    # Peek at the top N rows
     if limit:
         import itertools
         rows = itertools.islice(rows, 0, limit)
@@ -348,27 +356,17 @@ def write_records(stream: singer.catalog.CatalogEntry, rows: iter, tags=None, li
                     LOGGER.error(row)
                     raise TypeError('ROW {} is not dict'.format(type(row)))
 
+                # Disabled because this seems to return a string, rather than a dictionary
                 # Transform data row for JSON output
                 # record = singer.transform(
                 #     data=row,
                 #     schema=schema,
                 #     metadata=metadata
                 # )
+
                 record = transform_record(row, schema=schema)
 
                 if not isinstance(record, dict):
-                    LOGGER.error('ROW')
-                    LOGGER.error(type(record))
-                    LOGGER.error(record)
-
-                    LOGGER.error('SCHEMA')
-                    LOGGER.error(type(schema))
-                    LOGGER.error(schema)
-
-                    LOGGER.error('METADATA')
-                    LOGGER.error(type(metadata))
-                    LOGGER.error(metadata)
-
                     raise TypeError('RECORD {} is not dict'.format(type(record)))
 
                 # Emit record
@@ -404,7 +402,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
         if stream_id not in selected_stream_ids:
             continue
 
-        singer.log_info('Syncing stream:%s', stream_id)
+        singer.log_info('Syncing stream: "%s"', stream_id)
 
         filter_schema(stream.schema, stream.metadata)
 
@@ -453,8 +451,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                 days = MAX_LOOK_BACK_DAYS[stream_id]
 
                 # Get the current timestamp and "look back" the specified number of days
-                look_back_start_date = datetime.datetime.now(tz=pytz.UTC) - datetime.timedelta(
-                    days=days)
+                look_back_start_date = singer.utils.now() - datetime.timedelta(days=days)
 
                 # Must we confine the time range to avoid errors?
                 if look_back_start_date > start_date:
@@ -495,10 +492,6 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                     **report_params
                 )
 
-                # Find "close of business"
-                close_of_business = report.close_of_business(report.start_date)
-                LOGGER.info('CLOSE_OF_BUSINESS: %s', json.dumps(close_of_business))
-
                 # Emit records
                 write_records(
                     stream=stream,
@@ -507,12 +500,27 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                     limit=5
                 )
 
+                # Bookmark the progress through the stream
+                bookmark_date = report.start_date
+
+                # Find "close of business"
+                check_books_closed_for = report.end_date
+                close_of_business = report.close_of_business(date=check_books_closed_for)
+                if close_of_business is not None:
+                    LOGGER.info('CLOSE_OF_BUSINESS: %s', json.dumps(close_of_business))
+
+                    # Books are closed to the end of the month
+                    if close_of_business['isMonthClosed']:
+                        bookmark_date = TODAY.replace(day=1, month=TODAY.month + 1)
+                    elif close_of_business['isDayClosed']:
+                        bookmark_date = check_books_closed_for
+
                 # Preserve state for each stream
                 singer.write_bookmark(
                     state=state,
                     tap_stream_id=stream_id,
                     key='end_date',
-                    val=cast_date_to_datetime(date=report.end_date).isoformat()
+                    val=cast_date_to_datetime(bookmark_date).isoformat()
                 )
 
                 singer.write_state(state)

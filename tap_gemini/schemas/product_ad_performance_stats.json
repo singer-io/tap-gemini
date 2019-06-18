@@ -37,10 +37,6 @@
       "format": "date-time",
       "description": "The date. Either Day, Week or Month must be queried."
     },
-    "Hour": {
-      "type": "integer",
-      "description": "The hour in integer format. For example, 1 means reporting stats between 1am and 2am."
-    },
     "Pricing Type": {
       "type": "string",
       "description": "CPC, CPM"
