@@ -25,19 +25,9 @@ import singer.utils
 import tap_gemini.api
 import tap_gemini.report
 import tap_gemini.transport
+import tap_gemini.settings
 
 LOGGER = singer.get_logger()
-
-REQUIRED_CONFIG_KEYS = [
-    "start_date",
-    "username",
-    "password"
-]
-
-# Schema config
-SCHEMAS_DIR = 'schemas'
-METADATA_DIR = 'metadata'
-KEY_PROPERTIES_DIR = 'key_properties'
 
 # Map schema name to API object
 OBJECT_MAP = dict(
@@ -45,26 +35,6 @@ OBJECT_MAP = dict(
     campaign=tap_gemini.api.Campaign,
     # TODO Implement further objects
     # adgroup=api.AdGroup
-)
-
-# Time windowing for running reports in chunks
-# This prevents ERROR_CODE:10001 Max days window exceeded expected
-MAX_WINDOW_DAYS = dict(
-    search_stats=15,
-    performance_stats=15,
-    slot_performance_stats=15,
-    keyword_stats=400,
-    product_ads=400,
-    site_performance_stats=400,
-)
-
-# Maximum number of days to go back in time
-# This prevents ERROR_CODE:10002 Max look back window exceeded expected
-MAX_LOOK_BACK_DAYS = dict(
-    performance_stats=15,
-    product_ads=400,
-    site_performance_stats=400,
-    keyword_stats=750,
 )
 
 
@@ -117,7 +87,7 @@ def load_directory(dir_path: str) -> dict:
 def load_schemas() -> dict:
     """Load schemas from config files"""
 
-    schemas = load_directory(SCHEMAS_DIR)
+    schemas = load_directory(tap_gemini.settings.SCHEMAS_DIR)
 
     # Build singer.Schema objects from raw JSON data
     for name, data in schemas.items():
@@ -129,13 +99,13 @@ def load_schemas() -> dict:
 def load_metadata() -> dict:
     """Load metadata from config files"""
 
-    return load_directory(METADATA_DIR)
+    return load_directory(tap_gemini.settings.METADATA_DIR)
 
 
 def load_key_properties() -> dict:
     """Load key properties from config files"""
 
-    return load_directory(KEY_PROPERTIES_DIR)
+    return load_directory(tap_gemini.settings.KEY_PROPERTIES_DIR)
 
 
 def generate_time_windows(start: datetime.date, size: int, end: datetime.date = None) -> iter:
@@ -243,6 +213,64 @@ def build_report_params(config: dict, stream, start_date: datetime.datetime,
         start_date=datetime.date(start_date.year, start_date.month, start_date.day),
         end_date=datetime.date(end_date.year, end_date.month, end_date.day),
     )
+
+
+def get_books_closed(rep: tap_gemini.report.GeminiReport) -> datetime.datetime:
+    """
+    Get the time when the books are closed i.e. the data become static and will no longer change.
+
+    Only set the bookmark to the date when the books are closed, rather than naively using the
+    report end date.
+    """
+
+    # Default to start date: if books are closed then re-run the report in the future
+    # from this same beginning date.
+    bookmark_timestamp = cast_date_to_datetime(rep.start_date)
+    bookmark_date = bookmark_timestamp.date()
+
+    # Find when "close of business" occurred (i.e. most recent date for which books
+    # are closed, within the time range of the report.)
+    check_date = cast_date_to_datetime(rep.end_date)
+
+    # Find when books are closed, iterating back through time
+    while True:
+        try:
+            books_status = rep.close_of_business(date=check_date)
+
+        except tap_gemini.report.BooksClosedNotImplementedError:
+            break
+
+        books_closed = books_status['isMonthClosed'] | books_status['isDayClosed']
+
+        LOGGER.info('CLOSE_OF_BUSINESS: %s %s (%s%%)', check_date.date(),
+                    books_closed, books_status.get('dayProgressPercent'))
+
+        # Books are closed to the end of the month
+        if books_status['isMonthClosed']:
+            bookmark_date = check_date.replace(
+                day=1,
+                month=check_date.month + 1
+            )
+            LOGGER.info('CLOSE_OF_BUSINESS: Month starting %s is closed',
+                        check_date.date().replace(day=1))
+
+        elif books_status['isDayClosed']:
+            bookmark_date = check_date.date()
+
+        if books_closed:
+            bookmark_timestamp = datetime.datetime.combine(
+                date=bookmark_date,
+                time=datetime.time(0, tzinfo=pytz.timezone(
+                    books_status['advertiserTimezone']))
+            )
+
+        check_date -= datetime.timedelta(days=1)
+
+        # Stop looping
+        if books_closed | (check_date < bookmark_timestamp):
+            break
+
+    return bookmark_timestamp
 
 
 def filter_schema(schema: dict, metadata: list) -> dict:
@@ -447,7 +475,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
             # Define time range
             try:
                 # Is there a maximum look back? (i.e. earliest start date for report)
-                days = MAX_LOOK_BACK_DAYS[stream_id]
+                days = tap_gemini.settings.MAX_LOOK_BACK_DAYS[stream_id]
 
                 # Get the current timestamp and "look back" the specified number of days
                 look_back_start_date = singer.utils.now() - datetime.timedelta(days=days)
@@ -466,7 +494,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
             try:
                 time_windows = generate_time_windows(
                     start=start_date,
-                    size=MAX_WINDOW_DAYS[stream_id]
+                    size=tap_gemini.settings.MAX_WINDOW_DAYS[stream_id]
                 )
             except KeyError:
                 # Default time window: just use specified start/end date
@@ -500,54 +528,8 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                 )
 
                 # Bookmark the progress through the stream
-                # Only set the bookmark to the date when the books are closed
-
-                # Default to start date: if books are closed then re-run the report in the future
-                # from this same beginning date.
-                bookmark_timestamp = cast_date_to_datetime(report.start_date)
-                bookmark_date = bookmark_timestamp.date()
-
-                # Find when "close of business" occurred (i.e. most recent date for which books
-                # are closed, within the time range of the report.)
-                check_date = cast_date_to_datetime(report.end_date)
-
-                # Find when books are closed, iterating back through time
-                while True:
-                    try:
-                        books_status = report.close_of_business(date=check_date)
-
-                    except tap_gemini.report.BooksClosedNotImplementedError:
-                        break
-
-                    books_closed = books_status['isMonthClosed'] | books_status['isDayClosed']
-
-                    LOGGER.info('CLOSE_OF_BUSINESS: %s %s (%s%%)', check_date.date(),
-                                books_closed, books_status.get('dayProgressPercent'))
-
-                    # Books are closed to the end of the month
-                    if books_status['isMonthClosed']:
-                        bookmark_date = check_date.replace(
-                            day=1,
-                            month=check_date.month + 1
-                        )
-                        LOGGER.info('CLOSE_OF_BUSINESS: Month starting %s is closed',
-                                    check_date.date().replace(day=1))
-
-                    elif books_status['isDayClosed']:
-                        bookmark_date = check_date.date()
-
-                    if books_closed:
-                        bookmark_timestamp = datetime.datetime.combine(
-                            date=bookmark_date,
-                            time=datetime.time(0, tzinfo=pytz.timezone(
-                                books_status['advertiserTimezone']))
-                        )
-
-                    check_date -= datetime.timedelta(days=1)
-
-                    # Stop looping
-                    if books_closed | (check_date < bookmark_timestamp):
-                        break
+                # Get the time when the data is complete (no further changes will occur)
+                bookmark_timestamp = get_books_closed(rep=report)
 
                 # Preserve state for each stream
                 singer.write_bookmark(
@@ -565,7 +547,7 @@ def main():
     """Execute tap: build catalog and synchronise."""
 
     # Parse command line arguments
-    args = singer.utils.parse_args(REQUIRED_CONFIG_KEYS)
+    args = singer.utils.parse_args(tap_gemini.settings.REQUIRED_CONFIG_KEYS)
 
     # If discover flag was passed, run discovery mode and dump output to stdout
     if args.discover:
