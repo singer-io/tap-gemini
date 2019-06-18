@@ -14,6 +14,11 @@ REPORT_ENDPOINT = 'reports'
 CUSTOM_REPORT_ENDPOINT = REPORT_ENDPOINT + '/custom'
 
 
+class BooksClosedNotImplementedError(NotImplementedError):
+    """Books Closed is not supported for this cube."""
+    pass
+
+
 class GeminiReport:
     """
     Yahoo Gemini Native & Search API Report
@@ -215,5 +220,5 @@ class GeminiReport:
                 if error['message'] == 'Invalid cubeName passed':
                     LOGGER.warning('Cube "%s" is not in the list of currently supported reports',
                                    self.cube)
-                    return
+                    raise BooksClosedNotImplementedError(self.cube) from e
             raise

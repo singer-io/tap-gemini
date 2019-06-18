@@ -18,14 +18,13 @@ import json
 import os
 
 import pytz
-
 import singer
 import singer.metadata
 import singer.utils
 
-import tap_gemini.transport
-import tap_gemini.report
 import tap_gemini.api
+import tap_gemini.report
+import tap_gemini.transport
 
 LOGGER = singer.get_logger()
 
@@ -501,26 +500,61 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                 )
 
                 # Bookmark the progress through the stream
-                bookmark_date = report.start_date
+                # Only set the bookmark to the date when the books are closed
 
-                # Find "close of business"
-                check_books_closed_for = report.end_date
-                close_of_business = report.close_of_business(date=check_books_closed_for)
-                if close_of_business is not None:
-                    LOGGER.info('CLOSE_OF_BUSINESS: %s', json.dumps(close_of_business))
+                # Default to start date: if books are closed then re-run the report in the future
+                # from this same beginning date.
+                bookmark_timestamp = cast_date_to_datetime(report.start_date)
+                bookmark_date = bookmark_timestamp.date()
+
+                # Find when "close of business" occurred (i.e. most recent date for which books
+                # are closed, within the time range of the report.)
+                check_date = cast_date_to_datetime(report.end_date)
+
+                # Find when books are closed, iterating back through time
+                while True:
+                    try:
+                        books_status = report.close_of_business(date=check_date)
+
+                    except tap_gemini.report.BooksClosedNotImplementedError:
+                        break
+
+                    books_closed = books_status['isMonthClosed'] | books_status['isDayClosed']
+
+                    LOGGER.info('CLOSE_OF_BUSINESS: %s %s (%s%%)', check_date.date(),
+                                books_closed, books_status.get('dayProgressPercent'))
 
                     # Books are closed to the end of the month
-                    if close_of_business['isMonthClosed']:
-                        bookmark_date = TODAY.replace(day=1, month=TODAY.month + 1)
-                    elif close_of_business['isDayClosed']:
-                        bookmark_date = check_books_closed_for
+                    if books_status['isMonthClosed']:
+                        bookmark_date = check_date.replace(
+                            day=1,
+                            month=check_date.month + 1
+                        )
+                        LOGGER.info('CLOSE_OF_BUSINESS: Month starting %s is closed',
+                                    check_date.date().replace(day=1))
+
+                    elif books_status['isDayClosed']:
+                        bookmark_date = check_date.date()
+
+                    if books_closed:
+                        bookmark_timestamp = datetime.datetime.combine(
+                            date=bookmark_date,
+                            time=datetime.time(0, tzinfo=pytz.timezone(
+                                books_status['advertiserTimezone']))
+                        )
+
+                    check_date -= datetime.timedelta(days=1)
+
+                    # Stop looping
+                    if books_closed | (check_date < bookmark_timestamp):
+                        break
 
                 # Preserve state for each stream
                 singer.write_bookmark(
                     state=state,
                     tap_stream_id=stream_id,
                     key='end_date',
-                    val=cast_date_to_datetime(bookmark_date).isoformat()
+                    val=cast_date_to_datetime(bookmark_timestamp).isoformat()
                 )
 
                 singer.write_state(state)
