@@ -52,8 +52,6 @@ For **each** table that the tap produces, provide the following:
 - Bookmark column(s): _(if replicated incrementally)_ 
 - Link to API endpoint documentation:
 
----
-
 # Unsupported fields
 
 The following fields have been excluded from the schema because they are incompatible with other 
