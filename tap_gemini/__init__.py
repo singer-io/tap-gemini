@@ -17,6 +17,8 @@ import datetime
 import json
 import os
 
+import pytz
+
 import singer
 import singer.metadata
 import singer.utils
@@ -64,6 +66,19 @@ MAX_LOOK_BACK_DAYS = dict(
     product_ads=400,
     site_performance_stats=400,
 )
+
+
+def cast_date_to_datetime(date: datetime.date) -> datetime.datetime:
+    """Convert a date (default: today) to a timezone-aware datetime object"""
+
+    # Build timezone-aware datetime object
+    return datetime.datetime.combine(
+        date=date,
+        time=datetime.time(0, tzinfo=pytz.UTC)
+    )
+
+
+TODAY = cast_date_to_datetime(date=datetime.date.today())
 
 
 def get_abs_path(path: str) -> str:
@@ -136,7 +151,7 @@ def generate_time_windows(start: datetime.date, size: int, end: datetime.date = 
 
     # Default end time range today
     if end is None:
-        end = datetime.date.today()
+        end = TODAY
 
     # Enforce data types
     start = datetime.date(start.year, start.month, start.day)
@@ -210,8 +225,8 @@ def get_selected_streams(catalog: singer.Catalog) -> list:
     return selected_streams
 
 
-def build_report_params(config: dict, stream, start_date: datetime.date,
-                        end_date: datetime.date) -> dict:
+def build_report_params(config: dict, stream, start_date: datetime.datetime,
+                        end_date: datetime.datetime) -> dict:
     """
     Convert a JSON schema to Gemini report parameters.
 
@@ -267,8 +282,58 @@ def row_to_json(row: dict) -> dict:
     return new_row
 
 
+def transform_record(record: dict, schema: dict) -> dict:
+    """
+    Cast the data types of each field (property) of a record according to the schema definition.
+
+    :param record: Input record
+    :param schema: Schema definition of data types.
+    :return:
+    """
+
+    # Build a new dictionary, rather than mutating the input dictionary
+    transformed_record = dict()
+
+    # Iterate over properties in the record
+    for key, value in record.items():
+
+        # Get the property definition from the schema
+        prop = schema['properties'][key]
+
+        # Cast data types, as instructed by the schema
+        try:
+            if prop['type'] == 'string':
+                value = str(value)
+
+                # Parse dates
+                if prop.get('format') == 'date-time':
+                    value = singer.utils.strptime_to_utc(value).isoformat()
+
+            elif prop['type'] == 'integer':
+                value = int(value)
+
+            elif prop['type'] == 'number':
+                value = float(value)
+
+            else:
+                raise ValueError('Unknown data type', prop['type'])
+
+        # Show which property has caused the problem
+        except ValueError:
+            LOGGER.error('Property "%s" could not be cast to data type "%s"', key, prop['type'])
+            raise
+
+        transformed_record[key] = value
+
+    return transformed_record
+
+
 def write_records(stream: singer.catalog.CatalogEntry, rows: iter, tags=None, limit: int = 0):
     """Wrapper for singer utils"""
+
+    schema = stream.schema.to_dict()
+    metadata = singer.metadata.to_map(stream.metadata)
+    time_extracted = singer.utils.now()
 
     if limit:
         import itertools
@@ -278,20 +343,39 @@ def write_records(stream: singer.catalog.CatalogEntry, rows: iter, tags=None, li
     with singer.metrics.Timer(metric='job_timer', tags=tags):
         with singer.metrics.Counter(metric='record_count', tags=tags) as counter:
             for row in rows:
+
+                if not isinstance(row, dict):
+                    LOGGER.error(row)
+                    raise TypeError('ROW {} is not dict'.format(type(row)))
+
                 # Transform data row for JSON output
-                row = singer.transform(
-                    data=row,
-                    schema=stream.schema.to_dict(),
-                    metadata=singer.metadata.to_map(stream.metadata)
-                )
+                # record = singer.transform(
+                #     data=row,
+                #     schema=schema,
+                #     metadata=metadata
+                # )
+                record = transform_record(row, schema=schema)
 
-                # row = row_to_json(row)
+                if not isinstance(record, dict):
+                    LOGGER.error('ROW')
+                    LOGGER.error(type(record))
+                    LOGGER.error(record)
 
-                # Emit row
+                    LOGGER.error('SCHEMA')
+                    LOGGER.error(type(schema))
+                    LOGGER.error(schema)
+
+                    LOGGER.error('METADATA')
+                    LOGGER.error(type(metadata))
+                    LOGGER.error(metadata)
+
+                    raise TypeError('RECORD {} is not dict'.format(type(record)))
+
+                # Emit record
                 singer.write_record(
                     stream_name=stream.tap_stream_id,
-                    record=row,
-                    time_extracted=singer.utils.now()
+                    record=record,
+                    time_extracted=time_extracted
                 )
 
                 counter.increment()
@@ -304,7 +388,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
     bookmarks = state.get('bookmarks', dict())
 
     # Parse timestamp and convert to date
-    start_date = singer.utils.strptime_to_utc(config['start_date']).date()
+    start_date = singer.utils.strptime_to_utc(config['start_date'])
 
     selected_stream_ids = get_selected_streams(catalog)
 
@@ -367,14 +451,18 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
             try:
                 # Is there a maximum look back? (i.e. earliest start date for report)
                 days = MAX_LOOK_BACK_DAYS[stream_id]
-                look_back_start_date = datetime.date.today() - datetime.timedelta(days=days)
+
+                # Get the current timestamp and "look back" the specified number of days
+                look_back_start_date = datetime.datetime.now(tz=pytz.UTC) - datetime.timedelta(
+                    days=days)
 
                 # Must we confine the time range to avoid errors?
                 if look_back_start_date > start_date:
                     start_date = look_back_start_date
                     singer.log_warning(
-                        "%s enforced maximum look back of %s days, start date set to %s",
+                        "\"%s\" enforced maximum look back of %s days, start date set to %s",
                         stream_id, days, start_date)
+
             except KeyError:
                 pass
 
@@ -424,7 +512,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                     state=state,
                     tap_stream_id=stream_id,
                     key='end_date',
-                    val=report.end_date.isoformat()
+                    val=cast_date_to_datetime(date=report.end_date).isoformat()
                 )
 
                 singer.write_state(state)

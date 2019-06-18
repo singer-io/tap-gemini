@@ -1,10 +1,6 @@
 {
   "type": [
-    "date-time",
-    "date",
-    "integer",
-    "float",
-    "string"
+    "object"
   ],
   "additionalProperties": false,
   "properties": {
@@ -26,18 +22,21 @@
     },
     "Month": {
       "type": "string",
+      "format": "date-time",
       "description": "Month will be represented as the first day of the month in YYYY-MM-DD format. Either Day, Week or Month must be queried."
     },
     "Week": {
       "type": "string",
+      "format": "date-time",
       "description": "Week will be represented as the first day of the week in YYYY-MM-DD format. This will always be Monday. Either Day, Week or Month must be queried."
     },
     "Day": {
-      "type": "date",
-      "description": "The date in YYYY-MM-DD format. Either Day, Week or Month must be queried."
+      "type":"string",
+      "format": "date-time",
+      "description": "The date. Either Day, Week or Month must be queried."
     },
     "Hour": {
-      "type": "string",
+      "type": "integer",
       "description": "The hour in integer format. For example, 1 means reporting stats between 1am and 2am."
     },
     "Pricing Type": {
@@ -45,7 +44,7 @@
       "description": "CPC, CPM"
     },
     "Source": {
-      "type": "string",
+      "type": "integer",
       "description": "Integer value corresponding to various Source types."
     },
     "Card ID": {
@@ -77,11 +76,11 @@
       "description": "The total number of post click conversions."
     },
     "Spend": {
-      "type": "float",
+      "type": "number",
       "description": "The unadjusted spend amount. Please note that adjustments - meaning any corrections due to issues like overcharging - can be queried using the adjustment_stats cube."
     },
     "CTR": {
-      "type": "float",
+      "type": "number",
       "description": "The clickthrough rate."
     }
   }

@@ -1,10 +1,8 @@
 {
   "type": [
-    "date-time",
-    "date",
-    "integer",
-    "float",
-    "string"
+
+
+    "object"
   ],
   "additionalProperties": false,
   "properties": {
@@ -93,8 +91,9 @@
       "description": "Week will be represented as the first day of the week in YYYY-MM-DD format."
     },
     "Day": {
-      "type": "date",
-      "description": "The date in in YYYY-MM-DD format."
+      "type":"string",
+      "format": "date-time",
+      "description": "The calendar date"
     },
     "Impressions": {
       "type": "integer",
@@ -117,15 +116,15 @@
       "description": "Total number of conversions."
     },
     "Spend": {
-      "type": "float",
+      "type": "number",
       "description": "Total spend."
     },
     "Average CPC": {
-      "type": "float",
+      "type": "number",
       "description": "The average CPC value."
     },
     "CTR": {
-      "type": "float",
+      "type": "number",
       "description": "The clickthrough rate."
     }
   }

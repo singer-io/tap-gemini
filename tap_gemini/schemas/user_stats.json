@@ -1,10 +1,8 @@
 {
   "type": [
-    "date-time",
-    "date",
-    "integer",
-    "float",
-    "string"
+
+
+    "object"
   ],
   "additionalProperties": false,
   "properties": {
@@ -37,8 +35,9 @@
       "description": "ID of the ad group."
     },
     "Day": {
-      "type": "date",
-      "description": "The date in in YYYY-MM-DD format."
+      "type":"string",
+      "format": "date-time",
+      "description": "The calendar date."
     },
     "Pricing Type": {
       "type": "string",
@@ -125,7 +124,7 @@
       "description": "A synonym for the Conversions field (maintained for backwards compatibility)."
     },
     "Spend": {
-      "type": "float",
+      "type": "number",
       "description": "The unadjusted spend amount. Note that adjustments - meaning any corrections due to issues like overcharging - can be queried using the adjustment_stats cube."
     },
     "Reblogs": {
@@ -133,7 +132,7 @@
       "description": "The count of Tumblr Reblogs."
     },
     "Reblog Rate": {
-      "type": "float",
+      "type": "number",
       "description": "The rate of Tumblr Reblogs (over Impressions)."
     },
     "Likes": {
@@ -141,7 +140,7 @@
       "description": "The count of Tumblr Likes."
     },
     "Like Rate": {
-      "type": "float",
+      "type": "number",
       "description": "Rate of Tumblr Likes (over Impressions)."
     },
     "Follows": {
@@ -149,7 +148,7 @@
       "description": "The count of Tumblr Follows."
     },
     "Follow Rate": {
-      "type": "float",
+      "type": "number",
       "description": "The rate of Tumblr Follows (over Impressions)."
     },
     "Engagements": {
@@ -161,11 +160,11 @@
       "description": "Total of revenue-bearing Impressions."
     },
     "Engagement Rate": {
-      "type": "float",
+      "type": "number",
       "description": "The rate of total Tumblr Engagements (over Impressions)."
     },
     "Paid Engagement Rate": {
-      "type": "float",
+      "type": "number",
       "description": "The rate of revenue-bearing Engagements (over Impressions)."
     },
     "Video Starts": {
@@ -193,7 +192,7 @@
       "description": "The number of times the video played to 100% of its length."
     },
     "Cost Per Video View": {
-      "type": "float",
+      "type": "number",
       "description": "The average cost per video view."
     },
     "Video Closed": {
@@ -217,7 +216,7 @@
       "description": "Total clicks on an ad extension link (rather than the main link)."
     },
     "Ad Extn Spend": {
-      "type": "float",
+      "type": "number",
       "description": "Total spend associated to an ad extension."
     },
     "Average Position": {

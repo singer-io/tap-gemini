@@ -103,3 +103,5 @@ singer-check-tap-data
 state.json
 
 .idea/
+
+*.csv

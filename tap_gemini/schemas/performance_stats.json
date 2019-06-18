@@ -1,10 +1,6 @@
 {
   "type": [
-    "date-time",
-    "date",
-    "integer",
-    "float",
-    "string"
+    "object"
   ],
   "additionalProperties": false,
   "properties": {
@@ -26,18 +22,21 @@
     },
     "Month": {
       "type": "string",
+      "format": "date-time",
       "description": "Month will be represented as the first day of the month in YYYY-MM-DD format. Either Day, Week or Month must be queried."
     },
     "Week": {
       "type": "string",
+      "format": "date-time",
       "description": "Week will be represented as the first day of the week in YYYY-MM-DD format. This will always be Monday. Either Day, Week or Month must be queried."
     },
     "Day": {
-      "type": "date",
+      "type": "string",
+      "format": "date-time",
       "description": "The date in YYYY-MM-DD format. Either Day, Week or Month must be queried."
     },
     "Hour": {
-      "type": "string",
+      "type": "integer",
       "description": "The hour in integer format. For example, 1 means reporting stats between 1am and 2am."
     },
     "Pricing Type": {
@@ -77,15 +76,15 @@
       "description": "A synonym for the Conversions field (is kept for backwards compatibility)."
     },
     "Spend": {
-      "type": "float",
+      "type": "number",
       "description": "The unadjusted spend amount. Please note that adjustments - meaning any corrections due to issues like overcharging - can be queried using the adjustment_stats cube."
     },
     "Average Position": {
-      "type": "integer",
+      "type": "number",
       "description": "Impression weighted average position."
     },
     "Max Bid": {
-      "type": "integer",
+      "type": "number",
       "description": "The maximum bid value."
     },
     "Ad Extn Impressions": {
@@ -101,19 +100,19 @@
       "description": "Total conversions which were attributed back to an ad extension link click."
     },
     "Ad Extn Spend": {
-      "type": "float",
+      "type": "number",
       "description": "The spend resulting from clicking on an ad extension link."
     },
     "Average CPC": {
-      "type": "float",
+      "type": "number",
       "description": "The average CPC bid value."
     },
     "Average CPM": {
-      "type": "integer",
+      "type": "number",
       "description": "The average CPM bid value."
     },
     "CTR": {
-      "type": "float",
+      "type": "number",
       "description": "The clickthrough rate."
     },
     "Video Starts": {
@@ -141,7 +140,7 @@
       "description": "Number of times the video played to 100% of its length."
     },
     "Cost Per Video View": {
-      "type": "float",
+      "type": "number",
       "description": "Average cost per video view."
     },
     "Video Closed": {
@@ -177,7 +176,7 @@
       "description": "Number of users who clicked save."
     },
     "Save Rate": {
-      "type": "float",
+      "type": "number",
       "description": "Rate of saves (over opens)."
     },
     "Forwards": {
@@ -185,7 +184,7 @@
       "description": "Number of email addresses the email was forwarded to."
     },
     "Forward Rate": {
-      "type": "float",
+      "type": "number",
       "description": "Rate of forwards (over opens)."
     },
     "Click Outs": {
@@ -193,7 +192,7 @@
       "description": "Number of users to clicked out to advertiser landing page."
     },
     "Click Outs Rate": {
-      "type": "float",
+      "type": "number",
       "description": "Rate of clickouts (over opens)."
     },
     "Fact Conversion Counting": {
@@ -205,11 +204,11 @@
       "description": "The number of positive user interactions with an ad, like swipes, saves, opens, submits, and so on for example, the number of carousel cards viewed. Note that video play interactions are only counted from sessions that qualify for an interactive impression."
     },
     "Interaction Rate": {
-      "type": "float",
+      "type": "number",
       "description": "The sum of all interactions (both positive and neutral) relative to the total number of impressions, expressed as a percentage for example, .3. Note that neutral interactions include interactions like close or skip ad."
     },
     "Interactive Impressions Rate": {
-      "type": "float",
+      "type": "number",
       "description": "The sum of positive interactions impressions relative to the total number of impressions, expressed as a percentage for example, .5."
     }
   }

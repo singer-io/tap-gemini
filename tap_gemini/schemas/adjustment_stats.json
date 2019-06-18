@@ -1,10 +1,6 @@
 {
   "type": [
-    "date-time",
-    "date",
-    "integer",
-    "float",
-    "string"
+    "object"
   ],
   "additionalProperties": false,
   "properties": {
@@ -17,7 +13,8 @@
       "description": "The ID of the campaign."
     },
     "Day": {
-      "type": "date",
+      "type":"string",
+      "format": "date-time",
       "description": "The date in YYYY-MM-DD format."
     },
     "Pricing Type": {
@@ -49,7 +46,7 @@
       "description": "The total number of conversions includes both post click and post view conversions."
     },
     "Spend": {
-      "type": "float",
+      "type": "number",
       "description": "The spend amount."
     },
     "Average Position": {

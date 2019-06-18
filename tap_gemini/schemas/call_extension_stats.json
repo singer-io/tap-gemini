@@ -1,10 +1,6 @@
 {
   "type": [
-    "date-time",
-    "date",
-    "integer",
-    "float",
-    "string"
+    "object"
   ],
   "additionalProperties": false,
   "properties": {
@@ -29,8 +25,9 @@
       "description": ""
     },
     "Day": {
-      "type": "date",
-      "description": ""
+      "type":"string",
+      "format": "date-time",
+      "description": "Calendar date"
     },
     "Caller Name": {
       "type": "string",

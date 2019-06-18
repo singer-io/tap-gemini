@@ -1,10 +1,8 @@
 {
   "type": [
-    "date-time",
-    "date",
-    "integer",
-    "float",
-    "string"
+
+
+    "object"
   ],
   "additionalProperties": false,
   "properties": {
@@ -45,7 +43,8 @@
       "description": "The actual served URL post macro-expansion. Can only be requested if both Ad ID and Keyword ID are requested. Note that requesting Destination URL granularity will result in considerably longer report generation times - only request this data if you really need it."
     },
     "Day": {
-      "type": "date",
+      "type": "string",
+      "format": "date-time",
       "description": "The date in in YYYY-MM-DD format. Must be included in every query."
     },
     "Impressions": {
@@ -57,7 +56,7 @@
       "description": "The number of clicks."
     },
     "Spend": {
-      "type": "float",
+      "type": "number",
       "description": "The unadjusted spend amount. Please note that adjustments - meaning any corrections due to issues like overcharging - can be queried using the adjustment_stats cube."
     },
     "Conversions": {
@@ -81,11 +80,11 @@
       "description": "Maximum bid for the requested time interval."
     },
     "Average CPC": {
-      "type": "float",
+      "type": "number",
       "description": "The average CPC value."
     },
     "CTR": {
-      "type": "float",
+      "type": "number",
       "description": "The clickthrough rate."
     },
     "Impression Share": {

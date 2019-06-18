@@ -1,10 +1,8 @@
 {
   "type": [
-    "date-time",
-    "date",
-    "integer",
-    "float",
-    "string"
+
+
+    "object"
   ],
   "additionalProperties": false,
   "properties": {
@@ -25,7 +23,8 @@
       "description": "The ID of the ad group."
     },
     "Day": {
-      "type": "date",
+      "type":"string",
+      "format": "date-time",
       "description": "The date in YYYY-MM-DD format. Either Day, Week or Month must be queried."
     },
     "Supply Type": {
@@ -77,11 +76,11 @@
       "description": ""
     },
     "CTR": {
-      "type": "float",
+      "type": "number",
       "description": "The clickthrough rate."
     },
     "Average CPC": {
-      "type": "float",
+      "type": "number",
       "description": "The average CPC bid value."
     },
     "Fact Conversion Counting": {

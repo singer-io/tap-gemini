@@ -179,17 +179,21 @@ class GeminiSession(requests.Session):
     @staticmethod
     def log_response_errors(response: requests.Response):
 
-        # Parse response
-        data = response.json()
-        errors = data.pop('errors', dict())
+        try:
+            # Parse response
+            data = response.json()
+            errors = data.pop('errors', dict())
 
-        # Log error messages
-        for key, value in data.items():
-            LOGGER.error("%s: %s", key, value)
-
-        for error in errors:
-            for key, value in error.items():
+            # Log error messages
+            for key, value in data.items():
                 LOGGER.error("%s: %s", key, value)
+
+            for error in errors:
+                for key, value in error.items():
+                    LOGGER.error("%s: %s", key, value)
+
+        except json.JSONDecodeError:
+            LOGGER.error(response.text)
 
     def request(self, method: str, url: str, *args, **kwargs) -> requests.Response:
         """Wrapper for requests methods, implement error handling"""

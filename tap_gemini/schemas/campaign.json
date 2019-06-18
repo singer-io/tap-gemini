@@ -2,10 +2,10 @@
   "type": [
     "string",
     "integer",
-    "date-time",
+
     "array",
     "object",
-    "float"
+    "number"
   ],
   "additionalProperties": false,
   "description": "See description: https://developer.yahoo.com/nativeandsearch/guide/campaigns.html",
@@ -41,7 +41,7 @@
       "type": "object"
     },
     "subChannelModifier": {
-      "type": "float"
+      "type": "number"
     },
     "budget": {
       "type": "integer"
