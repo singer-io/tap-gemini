@@ -6,26 +6,25 @@ following the [Singer spec](https://github.com/singer-io/getting-started/blob/ma
 This tap:
 
 * Pulls raw data from [Yahoo Gemini reporting API](https://developer.yahoo.com/nativeandsearch/guide/reporting/)
-* Extracts the [reporting cubes](https://developer.yahoo
-.com/nativeandsearch/guide/reporting/cubes/) detailed below
+* Extracts the [reporting cubes](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/) detailed below in the "Table Schemas" section.
 * Outputs the schema for each resource
 * Incrementally pulls data based on the input state
 
 # Connecting
 
-## Requirements
+Follow the guidelines below to use this tap in Stitch or in a Python environment.
+
+## Stitch
 
 To install `tap-gemini` in Stitch, you need to create an API application and generate an OAuth 2.0 
-client ID and refresh token are required. See the [authetnication documentation](https://developer.yahoo.com/nativeandsearch/guide/navigate-the-api/authentication/) on the Oath 
-website.
-
-## Setup
+credentials. See the [authentication documentation](https://developer.yahoo.com/nativeandsearch/guide/navigate-the-api/authentication/) on the Oath 
+website for instructions, including their [OAuth 2.0 guide](https://developer.yahoo.com/oauth2/guide/).
 
 Enter the client ID as the username and the refresh token as the password.
 
-## Usage
+## Python
 
-Follow the instructions below to use the tap as a Python packag.
+Follow the instructions below to use the tap as a Python package.
 
 ### Installation
 
@@ -121,9 +120,14 @@ Some fields have been excluded from the schema (i.e. the meta-data inclusion is 
 `unsupported`) because they are incompatible with other fields. This could probably be fixed by 
 defining meta-data exclusions that depend on other fields.
 
-## Troubleshooting / Other Important Info
+# Errata
 
-All dates and times use the `advertiser` time zone.
+* All dates and times use the `advertiser` time zone.
+
+# Contributing
+
+* Github repository [tap-gemini](https://github.com/singer-io/tap-gemini)
+* Slack channel [#tap-gemini](https://slack.com/app_redirect?channel=tap-gemini)
 
 ---
 
