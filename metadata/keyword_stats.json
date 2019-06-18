@@ -1,0 +1,37 @@
+[
+  {
+    "metadata": {
+      "selected": false,
+      "inclusion": "available",
+      "replication_method": "INCREMENTAL"
+    },
+    "breadcrumb": []
+  },
+  {
+    "metadata": {
+      "inclusion": "automatic"
+    },
+    "breadcrumb": [
+      "properties",
+      "Day"
+    ]
+  },
+  {
+    "metadata": {
+      "inclusion": "automatic"
+    },
+    "breadcrumb": [
+      "properties",
+      "Advertiser ID"
+    ]
+  },
+  {
+    "metadata": {
+      "inclusion": "automatic"
+    },
+    "breadcrumb": [
+      "properties",
+      "Keyword ID"
+    ]
+  }
+]

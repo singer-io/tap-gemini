@@ -1,0 +1,19 @@
+[
+  {
+    "metadata": {
+      "selected": false,
+      "inclusion": "available",
+      "replication_method": "FULL_TABLE"
+    },
+    "breadcrumb": []
+  },
+  {
+    "metadata": {
+      "inclusion": "automatic"
+    },
+    "breadcrumb": [
+      "properties",
+      "id"
+    ]
+  }
+]
