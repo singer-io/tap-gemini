@@ -2,7 +2,7 @@
   {
     "metadata": {
       "selected": false,
-      "inclusion": "available",
+      "inclusion": "unsupported",
       "replication_method": "INCREMENTAL"
     },
     "breadcrumb": []

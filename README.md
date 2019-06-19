@@ -40,17 +40,16 @@ deactivate
 
 ### Execution
 
-Run the following command to run the tap.
+Run the following command to run the tap using the configuration specified in the JSON file `config.json`:
 
 ```bash
-~/.virtualenvs/tap-gemini/bin/tap-gemini --config ~/my_config_file.json
+~/.virtualenvs/tap-gemini/bin/tap-gemini --config ~/config.json
 ```
 
 To output the data to a CSV file, pipe the data stream into [target-csv](https://github.com/singer-io/target-csv):
 
 ```bash
-~/.virtualenvs/tap-gemini/bin/tap-gemini --config ~/my_config_file.json | ~/
-.virtualenvs/target-csv/bin/target-csv
+~/.virtualenvs/tap-gemini/bin/tap-gemini --config ~/config.json | ~/.virtualenvs/target-csv/bin/target-csv
 ```
 
 ### Configuration
@@ -68,6 +67,8 @@ These settings must be specified:
 * `advertiser_ids`: List of [advertiser](https://developer.yahoo.com/nativeandsearch/guide/advertiser.html) (account) ID numbers
 
 #### Optional settings
+
+These additional options are available:
 
 * `api_version`: The [API version](https://developer.yahoo.com/nativeandsearch/guide/navigate-the-api/versioning/) to use
 * `session`: Options for the [HTTP session](https://2.python-requests.org//en/master/user/advanced/#session-objects) such as headers and proxies with be passed into 
@@ -132,8 +133,11 @@ The following reporting cubes are implemented:
 * [search_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#search-stats)
 * [site_performance_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#site-performance-stats)
 * [slot_performance_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#slot-performance-stats)
-* [structured_snippet_extension_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#structured-snippet-extension-stats)
 * [user_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#user-stats)
+
+These cubes are *not* implemented:
+
+* [structured_snippet_extension_stats](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#structured-snippet-extension-stats)
 
 ### Objects
 
@@ -141,6 +145,9 @@ The following [account structure objects](https://developer.yahoo.com/nativeands
 
 * [advertiser](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#advertiser)
 * [campaign](https://developer.yahoo.com/nativeandsearch/guide/reporting/cubes/#campaign)
+
+The other API objects are implemented in Python but schema and metadata definitions need to be 
+written.
 
 ### Unsupported fields
 

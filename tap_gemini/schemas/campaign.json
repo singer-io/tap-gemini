@@ -3,7 +3,7 @@
     "object"
   ],
   "additionalProperties": false,
-  "description": "See: https://developer.yahoo.com/nativeandsearch/guide/campaigns.html",
+  "description": "See: https://developer.yahoo.com/nativeandsearch/guide/campaigns.html A campaign organizes one or more ad groups together and has its own budget and targeting settings. Campaigns allow you to manage your ads based on your advertising goals and business strategy. A campaign can include ads that run both in mobile search as well as in native positions within content streams across the Yahoo! network. You can control where your ads will run by configuring the channel attribute.\n\n",
   "properties": {
     "id": {
       "type": "integer"
@@ -23,7 +23,10 @@
       "type": "string"
     },
     "conversionRuleIds": {
-      "type": "string"
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "campaignName": {
       "type": "string"
@@ -35,16 +38,25 @@
       "type": "integer"
     },
     "conversionRuleConfig": {
-      "type": "string"
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "subChannelModifier": {
-      "type": "number"
+      "type": [
+        "number",
+        "null"
+      ]
     },
     "budget": {
       "type": "integer"
     },
     "trackingUrl": {
-      "type": "string"
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "isPartnerNetwork": {
       "type": "string"
@@ -53,7 +65,10 @@
       "type": "string"
     },
     "customParameters": {
-      "type": "string"
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "advancedGeoPos": {
       "type": "string"
@@ -71,7 +86,10 @@
       "type": "string"
     },
     "subChannel": {
-      "type": "string"
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "editorialStatus": {
       "type": "string"
@@ -80,7 +98,10 @@
       "type": "string"
     },
     "isDeepLink": {
-      "type": "string"
+      "type": [
+        "string",
+        "null"
+      ]
     }
   }
 }

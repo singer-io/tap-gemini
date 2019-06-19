@@ -6,11 +6,11 @@
   "properties": {
     "Advertiser ID": {
       "type": "integer",
-      "description": "The ID of the advertiser."
+      "description": "The identifier of the advertiser."
     },
     "Campaign ID": {
       "type": "integer",
-      "description": "The ID of the campaign."
+      "description": "The identifier of the campaign."
     },
     "Day": {
       "type":"string",

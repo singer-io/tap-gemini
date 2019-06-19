@@ -8,19 +8,19 @@
   "properties": {
     "Advertiser ID": {
       "type": "integer",
-      "description": "The ID of the advertiser."
+      "description": "The identifier of the advertiser."
     },
     "Campaign ID": {
       "type": "integer",
-      "description": "The ID of the campaign."
+      "description": "The identifier of the campaign."
     },
     "Section ID": {
       "type": "integer",
-      "description": "The ID of the section."
+      "description": "The identifier of the section."
     },
     "Ad Group ID": {
       "type": "integer",
-      "description": "The ID of the ad group."
+      "description": "The identifier of the ad group."
     },
     "Day": {
       "type":"string",

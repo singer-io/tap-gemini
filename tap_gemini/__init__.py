@@ -17,6 +17,7 @@ import json
 import os
 
 import pytz
+
 import singer
 import singer.metadata
 import singer.utils
@@ -53,7 +54,9 @@ def cast_date_to_datetime(date: datetime.date) -> datetime.datetime:
     )
 
 
-TODAY = cast_date_to_datetime(date=datetime.date.today())
+def today() -> datetime.datetime:
+    """Current calendar date"""
+    return cast_date_to_datetime(date=datetime.date.today())
 
 
 def get_abs_path(path: str) -> str:
@@ -126,7 +129,7 @@ def generate_time_windows(start: datetime.date, size: int, end: datetime.date = 
 
     # Default end time range today
     if end is None:
-        end = TODAY
+        end = today()
 
     # Enforce data types
     start = datetime.date(start.year, start.month, start.day)
@@ -152,7 +155,9 @@ def generate_time_windows(start: datetime.date, size: int, end: datetime.date = 
 
 
 def discover() -> singer.Catalog:
-    """Discover catalog of schemas ie. reporting cube definitions"""
+    """
+    Discover catalog of schemas ie. reporting cube definitions
+    """
 
     raw_schemas = load_schemas()
     metadata = load_metadata()
@@ -211,7 +216,7 @@ def build_report_params(config: dict, stream, start_date: datetime.datetime,
     """
 
     if end_date is None:
-        end_date = TODAY
+        end_date = today()
 
     advertiser_ids = list(config['advertiser_ids'])
 
@@ -271,7 +276,7 @@ def get_books_closed(rep: tap_gemini.report.GeminiReport) -> datetime.datetime:
     check_date = cast_date_to_datetime(rep.end_date)
 
     # Don't bother starting today, go back to yesterday
-    if check_date == TODAY:
+    if check_date == today():
         check_date -= datetime.timedelta(days=1)
 
     # Find when books are closed, iterating back through time
@@ -339,10 +344,22 @@ def transform_record(record: dict, schema: dict) -> dict:
         # Get the property definition from the schema
         prop = schema['properties'][key]
 
+        data_type = prop['type']
+
+        # If multiple data types are defined, pick one at random
+        if not isinstance(data_type, str):
+            data_types = set(data_type)
+
+            # If we have multiple data types to choose from, exclude null
+            if len(data_types) > 1:
+                data_types -= {'null'}
+
+            data_type = data_types.pop()
+
         try:
             value = transform_property(
                 value=value,
-                data_type=prop['type'],
+                data_type=data_type,
                 string_format=prop.get('format')
             )
 
@@ -357,18 +374,21 @@ def transform_record(record: dict, schema: dict) -> dict:
 
 
 def write_records(stream: singer.catalog.CatalogEntry, rows: iter, tags=None):
-    """Wrapper for singer utils"""
+    """
+    Wrapper for singer utils
+    """
 
     schema = stream.schema.to_dict()
     # metadata = singer.metadata.to_map(stream.metadata)
     time_extracted = singer.utils.now()
 
+    # Iterate over rows of data
     with singer.metrics.Timer(metric='job_timer', tags=tags):
         with singer.metrics.Counter(metric='record_count', tags=tags) as counter:
             for row in rows:
 
+                # Check type
                 if not isinstance(row, dict):
-                    LOGGER.error(row)
                     raise TypeError('ROW: Type {} is not dict'.format(type(row)))
 
                 # Disabled because this seems to return a string, rather than a dictionary
@@ -381,21 +401,32 @@ def write_records(stream: singer.catalog.CatalogEntry, rows: iter, tags=None):
 
                 record = transform_record(row, schema=schema)
 
+                # Check type
                 if not isinstance(record, dict):
                     raise TypeError('RECORD: Type {} is not dict'.format(type(record)))
 
                 # Emit record
-                singer.write_record(
-                    stream_name=stream.tap_stream_id,
-                    record=record,
-                    time_extracted=time_extracted
-                )
+                try:
+
+                    singer.write_record(
+                        stream_name=stream.tap_stream_id,
+                        record=record,
+                        time_extracted=time_extracted
+                    )
+
+                # Log problems that may occur in the tap after the record is emitted
+                except (OSError, BrokenPipeError):
+                    LOGGER.error('Tap record parsing error for stream "%s"', stream.tap_stream_id)
+                    LOGGER.error('Problematic record: "%s"', json.dumps(record))
+                    raise
 
                 counter.increment()
 
 
 def sync(config: dict, state: dict, catalog: singer.Catalog):
-    """Synchronise data from source schemas using input context"""
+    """
+    Synchronise data from source schemas using input context
+    """
 
     # Get bookmarks of state of each stream
     bookmarks = state.get('bookmarks', dict())
@@ -417,7 +448,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
         if stream_id not in selected_stream_ids:
             continue
 
-        singer.log_info('Syncing stream: "%s"', stream_id)
+        LOGGER.info('Syncing stream: "%s"', stream_id)
 
         filter_schema(stream.schema, stream.metadata)
 
@@ -447,7 +478,6 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
 
             # List API objects
             model = OBJECT_MAP[stream_id]
-
             write_records(
                 stream=stream,
                 rows=model.list_data(session=session),
@@ -481,7 +511,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
             except KeyError:
                 pass
 
-            # Break into time window chunks
+            # Break into time window chunks, if necessary
             try:
                 time_windows = generate_time_windows(
                     start=start_date,
@@ -490,7 +520,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
             except KeyError:
                 # Default time window: just use specified start/end date
                 time_windows = (
-                    (start_date, TODAY),
+                    (start_date, today()),
                 )
 
             # Each report is run within a single time window
@@ -534,7 +564,9 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
 
 @singer.utils.handle_top_exception(LOGGER)
 def main():
-    """Execute tap: build catalog and synchronise."""
+    """
+    Execute tap: build catalog and synchronise
+    """
 
     # Parse command line arguments
     args = singer.utils.parse_args(tap_gemini.settings.REQUIRED_CONFIG_KEYS)

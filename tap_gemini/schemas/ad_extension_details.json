@@ -6,27 +6,27 @@
   "properties": {
     "Advertiser ID": {
       "type": "integer",
-      "description": "The ID of the advertiser."
+      "description": "The identifier of the advertiser."
     },
     "Campaign ID": {
       "type": "integer",
-      "description": "The ID of the campaign."
+      "description": "The identifier of the campaign."
     },
     "Ad Group ID": {
       "type": "integer",
-      "description": "The ID of the ad group."
+      "description": "The identifier of the ad group."
     },
     "Ad ID": {
       "type": "integer",
-      "description": "The ID of the ad."
+      "description": "The identifier of the ad."
     },
     "Keyword ID": {
       "type": "integer",
-      "description": "The ID of the keyword."
+      "description": "The identifier of the keyword."
     },
     "Ad Extn ID": {
       "type": "integer",
-      "description": "The ID of the ad extension."
+      "description": "The identifier of the ad extension."
     },
     "Device Type": {
       "type": "string",

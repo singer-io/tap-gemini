@@ -1,14 +1,12 @@
 {
   "type": [
-
-
     "object"
   ],
   "additionalProperties": false,
   "properties": {
     "Advertiser ID": {
       "type": "integer",
-      "description": "The ID of the advertiser."
+      "description": "The identifier of the advertiser."
     },
     "Clicks": {
       "type": "integer",

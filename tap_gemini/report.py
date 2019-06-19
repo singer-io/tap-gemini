@@ -269,7 +269,7 @@ class GeminiReport:
         if books_closed_ratio is None:
             books_closed_ratio = 100 if books_closed else 0
 
-        LOGGER.info('CLOSE_OF_BUSINESS: %s %s (%s%%)', date, books_closed, books_closed_ratio)
+        LOGGER.debug('CLOSE_OF_BUSINESS: %s %s (%s%%)', date, books_closed, books_closed_ratio)
 
         # Build timestamp
         return datetime.datetime.combine(

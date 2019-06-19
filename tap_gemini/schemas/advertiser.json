@@ -3,7 +3,7 @@
     "object"
   ],
   "additionalProperties": false,
-  "description": "An advertiser is an entity that manages campaigns in the Native & Search API. It has settings such as contact information and billing details, and is able to manage campaigns and view reports for those campaigns. The Native & Search ID you use to log in to Ad Manager can be associated with one or more advertisers.",
+  "description": "See: https://developer.yahoo.com/nativeandsearch/guide/advertiser.html An advertiser is an entity that manages campaigns in the Native & Search API. It has settings such as contact information and billing details, and is able to manage campaigns and view reports for those campaigns. The Native & Search ID you use to log in to Ad Manager can be associated with one or more advertisers.",
   "properties": {
     "id": {
       "type": "integer"
@@ -35,13 +35,19 @@
       "format": "date-time"
     },
     "managedBy": {
-      "type": "string"
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "status": {
       "type": "string"
     },
     "trackingUrl": {
-      "type": "string"
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "type": {
       "type": "string"
@@ -50,7 +56,10 @@
       "type": "string"
     },
     "vatId": {
-      "type": "string"
+      "type": [
+        "string",
+        "null"
+      ]
     }
   }
 }

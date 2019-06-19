@@ -1,7 +1,7 @@
 [
   {
     "metadata": {
-      "selected": true,
+      "selected": false,
       "inclusion": "available",
       "replication_method": "INCREMENTAL"
     },
