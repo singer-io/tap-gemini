@@ -44,19 +44,22 @@ OBJECT_MAP = dict(
 )
 
 
-def cast_date_to_datetime(date: datetime.date) -> datetime.datetime:
-    """Convert a date (default: today) to a timezone-aware datetime object"""
+def cast_date_to_datetime(date: datetime.date = None) -> datetime.datetime:
+    """
+    Convert a date (default: today) to a timezone-aware datetime object
+
+    :param date: Calendar date, defaults to current day
+    """
+
+    # Default to current date
+    if date is None:
+        date = datetime.date.today()
 
     # Build timezone-aware datetime object
     return datetime.datetime.combine(
         date=date,
         time=datetime.time(0, tzinfo=pytz.UTC)
     )
-
-
-def today() -> datetime.datetime:
-    """Current calendar date"""
-    return cast_date_to_datetime(date=datetime.date.today())
 
 
 def get_abs_path(path: str) -> str:
@@ -129,7 +132,7 @@ def generate_time_windows(start: datetime.date, size: int, end: datetime.date = 
 
     # Default end time range today
     if end is None:
-        end = today()
+        end = cast_date_to_datetime(date=datetime.date.today())
 
     # Enforce data types
     start = datetime.date(start.year, start.month, start.day)
@@ -216,7 +219,7 @@ def build_report_params(config: dict, stream, start_date: datetime.datetime,
     """
 
     if end_date is None:
-        end_date = today()
+        end_date = cast_date_to_datetime(date=datetime.date.today())
 
     advertiser_ids = list(config['advertiser_ids'])
 
@@ -276,7 +279,7 @@ def get_books_closed(rep: tap_gemini.report.GeminiReport) -> datetime.datetime:
     check_date = cast_date_to_datetime(rep.end_date)
 
     # Don't bother starting today, go back to yesterday
-    if check_date == today():
+    if check_date == cast_date_to_datetime(date=datetime.date.today()):
         check_date -= datetime.timedelta(days=1)
 
     # Find when books are closed, iterating back through time
@@ -520,7 +523,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
             except KeyError:
                 # Default time window: just use specified start/end date
                 time_windows = (
-                    (start_date, today()),
+                    (start_date, cast_date_to_datetime(date=datetime.date.today())),
                 )
 
             # Each report is run within a single time window
