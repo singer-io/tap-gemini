@@ -17,10 +17,7 @@ Follow the guidelines below to use this tap in Stitch or in a Python environment
 ## Stitch
 
 To install `tap-gemini` in Stitch, you need to create an API application and generate an OAuth 2.0 
-credentials. See the [authentication documentation](https://developer.yahoo.com/nativeandsearch/guide/navigate-the-api/authentication/) on the Oath 
-website for instructions, including their [OAuth 2.0 guide](https://developer.yahoo.com/oauth2/guide/).
-
-Enter the client ID as the username, client ID as the password and the refresh token.
+credentials. See the [authentication documentation](https://developer.yahoo.com/nativeandsearch/guide/navigate-the-api/authentication/) on the Oath website for instructions, including their [OAuth 2.0 guide](https://developer.yahoo.com/oauth2/guide/). Enter the client ID as the username and the refresh token as the password.
 
 ## Python
 
