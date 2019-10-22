@@ -6,96 +6,96 @@
   "additionalProperties": false,
   "properties": {
     "Advertiser ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the advertiser."
     },
     "Campaign ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the campaign."
     },
     "Ad Group ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the ad group."
     },
     "Ad ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the ad."
     },
     "Keyword ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the keyword."
     },
     "Delivered Match Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Match type set the keyword delivered on."
     },
     "Search Term": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The phrase canon user search query."
     },
     "Device Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Device type of the user: Desktop, Tablet, Phone, Unknown."
     },
     "Destination URL": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The actual served URL post macro-expansion. Can only be requested if both Ad ID and Keyword ID are requested. Note that requesting Destination URL granularity will result in considerably longer report generation times - only request this data if you really need it."
     },
     "Day": {
-      "type": "string",
+      "type": ["string", "null"],
       "format": "date-time",
       "description": "The calendar date."
     },
     "Impressions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of impressions."
     },
     "Clicks": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of clicks."
     },
     "Spend": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The unadjusted spend amount. Please note that adjustments - meaning any corrections due to issues like overcharging - can be queried using the adjustment_stats cube."
     },
     "Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of conversions, includes both post click and post view conversions. For app install campaigns the default conversion windows are 7 days post-click and 1 day post view. For website conversions the default windows are 30 days post-click and 2 days post-view."
     },
     "Post Click Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of post click conversions."
     },
     "Post Impression Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of post view conversions."
     },
     "Average Position": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Impression weighted average position."
     },
     "Max Bid": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Maximum bid for the requested time interval."
     },
     "Average CPC": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The average CPC value."
     },
     "CTR": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The clickthrough rate."
     },
     "Impression Share": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Share of Impressions that the Advertiser or Campaign served to a given Keyword, after factoring in Targeting. For example, if Campaign X served 10 impressions to the keyword basketball, and a total of 100 bidded searches occurred on basketball during the time period selected, then Campaign X has an Impression Share of 10% for the term basketball."
     },
     "Click Share": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Share of Clicks that the Advertiser or Campaign received on a given Keyword, after factoring in Targeting. For example, if Campaign X had 10 Clicks to the keyword basketball, and a total of 100 Clicks occurred on basketball during the time period selected, then Campaign X has a Click Share of 10% for the term basketball"
     },
     "Conversion Share": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Share of Conversions that the Advertiser or Campaign received on a given Keyword, after factoring in Targeting. For example, if Campaign X had 10 Conversions to the keyword basketball, and a total of 100 Conversions occurred on basketball during the time period selected, then Campaign X has a Conversion Share of 10% for the term basketball."
     }
   }

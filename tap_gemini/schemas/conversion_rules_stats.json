@@ -7,96 +7,96 @@
   "additionalProperties": false,
   "properties": {
     "Advertiser ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the advertiser."
     },
     "Campaign ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the campaign."
     },
     "Ad Group ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the ad group."
     },
     "Rule ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier associated with the conversion rule."
     },
     "Rule Name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The name associated with the conversion."
     },
     "Category Name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The category associated with conversion."
     },
     "Conversion Device": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "SmartPhone, Tablet or Desktop. This is the device the conversion event occurred on, and it can be different from the device associated with the impression or click. Device on other reports is the device associated with the impression, click events."
     },
     "Keyword ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the keyword. This will be blank for Native Campaigns."
     },
     "Keyword Value": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The actual keyword."
     },
     "Source Name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Native, Search or Other."
     },
     "Price Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The pricy type."
     },
     "Day": {
-      "type":"string",
+      "type": "string",
       "format": "date-time",
       "description": "The calendar date."
     },
     "Post View Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of post view conversions."
     },
     "Post Click Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of post click conversions."
     },
     "Conversion Value": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The actual value associated with the conversion event."
     },
     "Post Click Conversion Value": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The Conversion Value attributed to Post Click Conversions."
     },
     "Post View Conversion Value": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The Conversion Value attributed to Post View Conversions."
     },
     "Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of conversions, includes both post click and post view conversions. For app install campaigns the default conversion windows are 7 days post-click and 1 day post view. For website conversions the default windows are 30 days post-click and 2 days post-view."
     },
     "In App Post Click Convs": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Total Post Click Conversions that occurred in the app after it was installed. These conversions occurred in the app, but were attributed to clicks made on an ad outside of the app."
     },
     "In App Post View Convs": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Total Post View Conversions that occurred in the app after it was installed. These conversions occurred in the app, but were attributed to impressions made on an ad outside of the app."
     },
     "In App Post Install Convs": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Total Post Install Conversions that occurred in the app after it was installed. These conversions occurred in the app, but were attributed to the installation made on an ad outside of the app."
     },
     "Landing Page Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The landing page type."
     },
     "Fact Conversion Counting": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The way your conversions were counted for the campaign during the report time range (ALL_PER_INTERACTION, ONE_PER_INTERACTION)."
     }
   }

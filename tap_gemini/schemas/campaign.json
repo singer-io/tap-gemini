@@ -6,21 +6,21 @@
   "description": "See: https://developer.yahoo.com/nativeandsearch/guide/campaigns.html A campaign organizes one or more ad groups together and has its own budget and targeting settings. Campaigns allow you to manage your ads based on your advertising goals and business strategy. A campaign can include ads that run both in mobile search as well as in native positions within content streams across the Yahoo! network. You can control where your ads will run by configuring the channel attribute.\n\n",
   "properties": {
     "id": {
-      "type": "integer"
+      "type": ["integer", "null"]
     },
     "createdDate": {
-      "type": "string",
+      "type": ["string", "null"],
       "format": "date-time"
     },
     "lastUpdateDate": {
-      "type": "string",
+      "type": ["string", "null"],
       "format": "date-time"
     },
     "status": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "budgetType": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "conversionRuleIds": {
       "type": [
@@ -29,13 +29,13 @@
       ]
     },
     "campaignName": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "biddingStrategy": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "advertiserId": {
-      "type": "integer"
+      "type": ["integer", "null"]
     },
     "conversionRuleConfig": {
       "type": [
@@ -50,7 +50,7 @@
       ]
     },
     "budget": {
-      "type": "integer"
+      "type": ["integer", "null"]
     },
     "trackingUrl": {
       "type": [
@@ -59,10 +59,10 @@
       ]
     },
     "isPartnerNetwork": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "language": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "customParameters": {
       "type": [
@@ -71,19 +71,19 @@
       ]
     },
     "advancedGeoPos": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "advancedGeoNeg": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "optimizationRuleIds": {
       "type": "array"
     },
     "objective": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "effectiveStatus": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "subChannel": {
       "type": [
@@ -92,10 +92,10 @@
       ]
     },
     "editorialStatus": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "channel": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "isDeepLink": {
       "type": [

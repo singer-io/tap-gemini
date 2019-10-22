@@ -5,82 +5,82 @@
   "additionalProperties": false,
   "properties": {
     "Advertiser ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the advertiser."
     },
     "Campaign ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the campaign."
     },
     "Ad Group ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the ad group."
     },
     "Ad ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the ad."
     },
     "Month": {
-      "type": "string",
+      "type": ["string", "null"],
       "format": "date-time",
       "description": "Month will be represented as the first day of the month in YYYY-MM-DD format. Either Day, Week or Month must be queried."
     },
     "Week": {
-      "type": "string",
+      "type": ["string", "null"],
       "format": "date-time",
       "description": "Week will be represented as the first day of the week in YYYY-MM-DD format. This will always be Monday. Either Day, Week or Month must be queried."
     },
     "Day": {
-      "type":"string",
+      "type": ["string", "null"],
       "format": "date-time",
       "description": "The date. Either Day, Week or Month must be queried."
     },
     "Hour": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The hour in integer format. For example, 1 means reporting stats between 1am and 2am."
     },
     "Pricing Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "CPC, CPM"
     },
     "Source": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Integer value corresponding to various Source types."
     },
     "Card ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Ad slot asset Id."
     },
     "Card Position": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Ad slot Horizontal Index."
     },
     "Ad Format Name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Category of Ad like Single Image, Mail Ad, Video, etc."
     },
     "Rendered Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Ad got rendered as Standard (e.g. Text) or Multiple (e.g. Carousel)."
     },
     "Impressions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of impressions."
     },
     "Clicks": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of clicks."
     },
     "Post Click Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of post click conversions."
     },
     "Spend": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The unadjusted spend amount. Please note that adjustments - meaning any corrections due to issues like overcharging - can be queried using the adjustment_stats cube."
     },
     "CTR": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The clickthrough rate."
     }
   }

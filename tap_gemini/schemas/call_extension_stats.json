@@ -5,56 +5,56 @@
   "additionalProperties": false,
   "properties": {
     "Advertiser ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "ID of the advertiser."
     },
     "Campaign ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "ID of the campaign."
     },
     "Ad Group ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "ID of the ad group."
     },
     "Month": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": ""
     },
     "Week": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": ""
     },
     "Day": {
-      "type":"string",
+      "type": ["string", "null"],
       "format": "date-time",
       "description": "Calendar date"
     },
     "Caller Name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Name of the Caller."
     },
     "Caller Area Code": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Caller Area Code."
     },
     "Caller Number": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Caller number."
     },
     "Call Start Time": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Call Start Time in UTC."
     },
     "Call End Time": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Call End Time in UTC."
     },
     "Call Status": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Status of the Call Received, ANSWER/NOANSWER."
     },
     "Call Duration": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Duration of the call in seconds."
     }
   }
