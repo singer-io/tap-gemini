@@ -1,7 +1,7 @@
 [
   {
     "metadata": {
-      "selected": false,
+      "selected": true,
       "inclusion": "available",
       "replication_method": "INCREMENTAL"
     },
@@ -23,6 +23,15 @@
     "breadcrumb": [
       "properties",
       "Advertiser ID"
+    ]
+  },
+  {
+    "metadata": {
+      "inclusion": "automatic"
+    },
+    "breadcrumb": [
+      "properties",
+      "Keyword ID"
     ]
   }
 ]

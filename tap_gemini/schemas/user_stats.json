@@ -1,235 +1,234 @@
 {
   "type": [
-    "date-time",
-    "date",
-    "integer",
-    "float",
-    "string"
+
+
+    "object"
   ],
   "additionalProperties": false,
   "properties": {
     "Advertiser ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "ID of the advertiser."
     },
     "Campaign ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "ID of the campaign."
     },
     "Audience ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "ID of the Audience that received Impressions."
     },
     "Audience Name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Name of the Audience that received Impressions."
     },
     "Audience Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Type of the Audience that received Impressions [General Interest Category/Custom Audience/Custom Segment]."
     },
     "Audience Status": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Status of the Audience that received Impressions (ON, OFF)."
     },
     "Ad Group ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "ID of the ad group."
     },
     "Day": {
-      "type": "date",
-      "description": "The date in in YYYY-MM-DD format."
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "The calendar date."
     },
     "Pricing Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The pricing type."
     },
     "Source Name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Native, Search or Other."
     },
     "Gender": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The gender of the user: F, M, or U."
     },
     "Age": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Age group of the user: 18-24, 25-34, 35-44, 45-54, 55-64."
     },
     "Device Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Device type of the user: Desktop, Tablet, Phone, Unknown."
     },
     "Country": {
-      "type": "string",
-      "description": "Name of the user\u2019s country."
+      "type": ["string", "null"],
+      "description": "Name of the users country."
     },
     "State": {
-      "type": "string",
-      "description": "Name of the user\u2019s state."
+      "type": ["string", "null"],
+      "description": "Name of the users state."
     },
     "City": {
-      "type": "string",
-      "description": "Name of the user\u2019s City."
+      "type": ["string", "null"],
+      "description": "Name of the users City."
     },
     "Zip": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Zip code of the user."
     },
     "DMA WOEID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The Where on Earth ID associated with the DMA."
     },
     "City WOEID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The Where on Earth ID associated with the City."
     },
     "State WOEID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The Where on Earth ID associated with the State."
     },
     "Zip WOEID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The Where on Earth ID associated with the Zip Code."
     },
     "Country WOEID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The Where on Earth ID associated with the Country."
     },
     "Location Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Flags whether the location listed in the report indicates the physical location of the user or the location of their intent (for Search)."
     },
     "Impressions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of impressions."
     },
     "Clicks": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of clicks."
     },
     "Post Click Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of post click conversions."
     },
     "Post Impression Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of post view conversions."
     },
     "Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of conversions, which includes both post click and post view conversions. For app install campaigns, the default conversion windows are 7 days post-click and 1 day post view. For website conversions, the default windows are 30 days post-click and 2 days post-view."
     },
     "Total Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "A synonym for the Conversions field (maintained for backwards compatibility)."
     },
     "Spend": {
-      "type": "float",
+      "type": ["number", "null"],
       "description": "The unadjusted spend amount. Note that adjustments - meaning any corrections due to issues like overcharging - can be queried using the adjustment_stats cube."
     },
     "Reblogs": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The count of Tumblr Reblogs."
     },
     "Reblog Rate": {
-      "type": "float",
+      "type": ["number", "null"],
       "description": "The rate of Tumblr Reblogs (over Impressions)."
     },
     "Likes": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The count of Tumblr Likes."
     },
     "Like Rate": {
-      "type": "float",
+      "type": ["number", "null"],
       "description": "Rate of Tumblr Likes (over Impressions)."
     },
     "Follows": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The count of Tumblr Follows."
     },
     "Follow Rate": {
-      "type": "float",
+      "type": ["number", "null"],
       "description": "The rate of Tumblr Follows (over Impressions)."
     },
     "Engagements": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The count of total Tumblr Engagements."
     },
     "Paid Engagements": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Total of revenue-bearing Impressions."
     },
     "Engagement Rate": {
-      "type": "float",
+      "type": ["number", "null"],
       "description": "The rate of total Tumblr Engagements (over Impressions)."
     },
     "Paid Engagement Rate": {
-      "type": "float",
-      "description": "The rate of revenue-bearing Engagements (over Impressions).\u201d"
+      "type": ["number", "null"],
+      "description": "The rate of revenue-bearing Engagements (over Impressions)."
     },
     "Video Starts": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of video starts."
     },
     "Video Views": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of video views."
     },
     "Video 25% Complete": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of times the video played to 25% of its length."
     },
     "Video 50% Complete": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of times the video played to 50% of its length."
     },
     "Video 75% Complete": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of times the video played to 75% of its length."
     },
     "Video 100% Complete": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of times the video played to 100% of its length."
     },
     "Cost Per Video View": {
-      "type": "float",
+      "type": ["number", "null"],
       "description": "The average cost per video view."
     },
     "Video Closed": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of times the video was closed."
     },
     "Video Skipped": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of times the video was skipped."
     },
     "Video after 30 seconds view": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of times the video played longer than 30 seconds."
     },
     "Ad Extn Impressions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Total impressions for which an ad extension was displayed."
     },
     "Ad Extn Clicks": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Total clicks on an ad extension link (rather than the main link)."
     },
     "Ad Extn Spend": {
-      "type": "float",
+      "type": ["number", "null"],
       "description": "Total spend associated to an ad extension."
     },
     "Average Position": {
-      "type": "integer",
+      "type": ["number", "null"],
       "description": "The average position of the ad."
     },
     "Landing Page Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The landing page type."
     },
     "Fact Conversion Counting": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The way your conversions were counted for the campaign during the report time range (ALL_PER_INTERACTION, ONE_PER_INTERACTION)."
     }
   }

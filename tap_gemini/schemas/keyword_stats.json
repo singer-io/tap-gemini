@@ -1,95 +1,94 @@
 {
   "type": [
-    "date-time",
-    "date",
-    "integer",
-    "float",
-    "string"
+
+
+    "object"
   ],
   "additionalProperties": false,
   "properties": {
     "Advertiser ID": {
-      "type": "integer",
-      "description": "The ID of the advertiser."
+      "type": ["integer", "null"],
+      "description": "The identifier of the advertiser."
     },
     "Campaign ID": {
-      "type": "integer",
-      "description": "The ID of the campaign."
+      "type": ["integer", "null"],
+      "description": "The identifier of the campaign."
     },
     "Ad Group ID": {
-      "type": "integer",
-      "description": "The ID of the ad group."
+      "type": ["integer", "null"],
+      "description": "The identifier of the ad group."
     },
     "Ad ID": {
-      "type": "integer",
-      "description": "The ID of the ad."
+      "type": ["integer", "null"],
+      "description": "The identifier of the ad."
     },
     "Keyword ID": {
-      "type": "integer",
-      "description": "The ID of the keyword. Must be included in any query."
+      "type": ["integer", "null"],
+      "description": "The identifier of the keyword."
     },
     "Destination URL": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The actual served URL post macro-expansion. Can only be requested if both Ad ID and Keyword ID are requested. Note that requesting Destination URL granularity will result in considerably longer report generation times - only request this data if you really need it."
     },
     "Day": {
-      "type": "date",
-      "description": "The date in YYYY-MM-DD format. Must be included in every query."
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "The calendar date."
     },
     "Device Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Device type of the user: Desktop, Tablet, Phone, Unknown. Note that Device Type data is only available after the field is launched. If you run it for a previous date, it will return NONE in the Device Type column."
     },
     "Source Name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Native, Search, or Other."
     },
     "Impressions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of impressions."
     },
     "Clicks": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of clicks."
     },
     "Post Click Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of post click conversions."
     },
     "Post Impression Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of post view conversions."
     },
     "Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of conversions, includes both post click and post view conversions. For app install campaigns the default conversion windows are 7 days post-click and 1 day post view. For website conversions the default windows are 30 days post-click and 2 days post-view."
     },
     "Total Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "A synonym for the Conversions field (is kept for backwards compatibility)."
     },
     "Spend": {
-      "type": "float",
+      "type": ["number", "null"],
       "description": "The unadjusted spend amount. Please note that adjustments - meaning any corrections due to issues like overcharging - can be queried using the adjustment_stats cube."
     },
     "Average Position": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Impression weighted average position"
     },
     "Max Bid": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Impression weighted average position."
     },
     "Average CPC": {
-      "type": "float",
+      "type": ["number", "null"],
       "description": "The average CPC bid value."
     },
     "Average CPM": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The average CPM bid value."
     },
     "CTR": {
-      "type": "float",
+      "type": ["number", "null"],
       "description": "The clickthrough rate."
     }
   }

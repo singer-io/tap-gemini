@@ -1,53 +1,65 @@
 {
   "type": [
-    "string",
-    "integer",
-    "date-time"
+    "object"
   ],
   "additionalProperties": false,
-  "description": "An advertiser is an entity that manages campaigns in the Native & Search API. It has settings such as contact information and billing details, and is able to manage campaigns and view reports for those campaigns. The Native & Search ID you use to log in to Ad Manager can be associated with one or more advertisers.",
+  "description": "See: https://developer.yahoo.com/nativeandsearch/guide/advertiser.html An advertiser is an entity that manages campaigns in the Native & Search API. It has settings such as contact information and billing details, and is able to manage campaigns and view reports for those campaigns. The Native & Search ID you use to log in to Ad Manager can be associated with one or more advertisers.",
   "properties": {
     "id": {
-      "type": "integer"
+      "type": ["integer", "null"]
     },
     "advertiserName": {
-      "type": "integer"
+      "type": ["string", "null"]
     },
     "timezone": {
-      "type": "integer"
+      "type": ["string", "null"]
     },
     "currency": {
-      "type": "integer"
+      "type": ["string", "null"]
     },
     "billingCountry": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "bookingCountry": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "createdDate": {
-      "type": "date-time"
+      "type": ["string", "null"],
+      "format": "date-time"
     },
     "language": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "lastUpdateDate": {
-      "type": "date-time"
+      "type": ["string", "null"],
+      "format": "date-time"
     },
     "managedBy": {
-      "type": "string"
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "status": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "trackingUrl": {
-      "type": "string"
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "type": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "webSiteUrl": {
-      "type": "string"
+      "type": ["string", "null"]
+    },
+    "vatId": {
+      "type": [
+        "string",
+        "null"
+      ]
     }
   }
 }

@@ -1,131 +1,130 @@
 {
   "type": [
-    "date-time",
-    "date",
-    "integer",
-    "float",
-    "string"
+
+
+    "object"
   ],
   "additionalProperties": false,
   "properties": {
     "Advertiser ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "ID of the advertiser."
     },
     "Campaign ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "ID of the shopping campaigns."
     },
     "Ad Group ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "ID of the ad group."
     },
     "Offer ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "ID of the offer, same value as the id field in the product feed. This is the merchant-side ID of the product."
     },
     "Category ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "ID of the product category, foreign key to the product_categories dimension."
     },
     "Category Name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The name associated with the Category ID."
     },
     "Device": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "SmartPhone, Tablet or Desktop."
     },
     "Product Type": {
-      "type": "string",
-      "description": "The merchant\u2019s own product category string, same value as the \u201cproduct type\u201d field in the product feed."
+      "type": ["string", "null"],
+      "description": "The merchants own product category string, same value as the product type field in the product feed."
     },
     "Brand": {
-      "type": "string",
-      "description": "Brand of the offer, same value as the \u201cbrand\u201d field in the product feed."
+      "type": ["string", "null"],
+      "description": "Brand of the offer, same value as the brand field in the product feed."
     },
     "Offer Group ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The id of the leaf product group node that won the auction."
     },
     "Product ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The id of the product. This is the Yahoo-side ID given to the product."
     },
     "Product Name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The Name of the product."
     },
     "Custom Label 0": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "One of 5 different custom labels that can be applied to a Product."
     },
     "Custom Label 1": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "One of 5 different custom labels that can be applied to a Product."
     },
     "Custom Label 2": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "One of 5 different custom labels that can be applied to a Product."
     },
     "Custom Label 3": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "One of 5 different custom labels that can be applied to a Product."
     },
     "Custom Label 4": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "One of 5 different custom labels that can be applied to a Product."
     },
     "Source": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Source=1 represents native traffic. Source=2 represents search traffic."
     },
     "Device Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Device type of the user: Desktop, Tablet, Phone, Unknown."
     },
     "Month": {
-      "type": "string",
-      "description": "Month will be represented as the first day of the month in YYYY-MM-DD\u2019 format."
+      "type": ["string", "null"],
+      "description": "Month will be represented as the first day of the month in YYYY-MM-DD format."
     },
     "Week": {
-      "type": "string",
-      "description": "Week will be represented as the first day of the week in YYYY-MM-DD\u2019 format."
+      "type": ["string", "null"],
+      "description": "Week will be represented as the first day of the week in YYYY-MM-DD format."
     },
     "Day": {
-      "type": "date",
-      "description": "The date in in YYYY-MM-DD\u2019 format."
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "The calendar date"
     },
     "Impressions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of impressions."
     },
     "Clicks": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of clicks."
     },
     "Post View Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of post view conversions."
     },
     "Post Click Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of post click conversions."
     },
     "Total Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Total number of conversions."
     },
     "Spend": {
-      "type": "float",
+      "type": ["number", "null"],
       "description": "Total spend."
     },
     "Average CPC": {
-      "type": "float",
+      "type": ["number", "null"],
       "description": "The average CPC value."
     },
     "CTR": {
-      "type": "float",
+      "type": ["number", "null"],
       "description": "The clickthrough rate."
     }
   }

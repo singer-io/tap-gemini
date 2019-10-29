@@ -1,6 +1,8 @@
 # coding=utf-8
 """
 Yahoo Gemini API transport layer via a HTTP session
+
+https://developer.yahoo.com/nativeandsearch/guide/
 """
 
 import argparse
@@ -21,13 +23,16 @@ SANDBOX_URL_FORMAT = "https://sandbox-api.gemini.yahoo.com/v{}/rest/"
 AUTHORIZATION_URL = "https://api.login.yahoo.com/oauth2/request_auth"
 AUTHENTICATION_URL = "https://api.login.yahoo.com/oauth2/get_token"
 
+# https://developer.yahoo.com/nativeandsearch/guide/navigate-the-api/versioning/
+DEFAULT_API_VERSION = 3
+
 
 class GeminiSession(requests.Session):
     """Yahoo Gemini HTTP API Session"""
 
     def __init__(self, client_id: str, client_secret: str, refresh_token: str,
                  access_token: str = None, user_agent: str = None, sandbox: bool = False,
-                 api_version: int = 3, session_options: dict = None):
+                 api_version: int = None, session_options: dict = None):
 
         # Initialise HTTP session
         super().__init__()
@@ -38,6 +43,9 @@ class GeminiSession(requests.Session):
             setattr(self, key, value)
 
         # Configure API access
+        if api_version is None:
+            api_version = DEFAULT_API_VERSION
+
         self.api_version = api_version
 
         # Build API base URL
@@ -178,18 +186,23 @@ class GeminiSession(requests.Session):
 
     @staticmethod
     def log_response_errors(response: requests.Response):
+        LOGGER.error(response.request.url)
 
-        # Parse response
-        data = response.json()
-        errors = data.pop('errors', dict())
+        try:
+            # Parse response
+            data = response.json()
+            errors = data.pop('errors', dict())
 
-        # Log error messages
-        for key, value in data.items():
-            LOGGER.error("%s: %s", key, value)
-
-        for error in errors:
-            for key, value in error.items():
+            # Log error messages
+            for key, value in data.items():
                 LOGGER.error("%s: %s", key, value)
+
+            for error in errors:
+                for key, value in error.items():
+                    LOGGER.error("%s: %s", key, value)
+
+        except json.JSONDecodeError:
+            LOGGER.error(response.text)
 
     def request(self, method: str, url: str, *args, **kwargs) -> requests.Response:
         """Wrapper for requests methods, implement error handling"""
@@ -261,73 +274,12 @@ class GeminiSession(requests.Session):
 
         return api_response
 
-    def list_advertisers(self) -> list:
+    @property
+    def advertisers(self) -> list:
         """https://developer.yahoo.com/nativeandsearch/guide/advertiser.html"""
         return self.call(endpoint='advertiser', params=dict(mr=500))
 
-    def get_data_dictionary(self) -> list:
+    @property
+    def dictionary(self) -> list:
         """https://developer.yahoo.com/nativeandsearch/guide/resources/data-dictionary/"""
         return self.call(endpoint='dictionary')
-
-
-def debug_url(url: str):
-    """Retrieve a URL via HTTP"""
-    response = requests.get(url=url)
-
-    try:
-        response.raise_for_status()
-
-    # Log error message
-    except requests.HTTPError as http_error:
-        LOGGER.error(http_error)
-        LOGGER.error(http_error.response.text)
-        for arg in http_error.args:
-            LOGGER.error(arg)
-        raise
-
-    print(response.text)
-
-    return response
-
-
-def sandbox_signup():
-    url = 'http://sandbox-api.gemini.yahoo.com/v2/rest/advertisersignup'
-    debug_url(url)
-    raise NotImplementedError()
-
-
-def debug(config_path):
-    """Test HTTP API connection"""
-
-    # Load config file
-    with open(config_path, 'r') as file:
-        config = json.load(file)
-        LOGGER.info('Loaded "{}"'.format(file.name))
-
-    # Authenticate
-    session = GeminiSession(
-        client_id=config['username'],
-        access_token=config['password'],
-        session_options=config.get('session', dict()),
-    )
-
-    LOGGER.info(session)
-
-
-def main():
-    logging.basicConfig(level=logging.DEBUG)
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--debug', action='store_true', help="Debug API connection")
-    parser.add_argument('-c', '--config', help='Config file')
-
-    args = parser.parse_args()
-
-    if args.debug:
-        debug(config_path=args.config)
-    else:
-        parser.print_help()
-
-
-if __name__ == '__main__':
-    main()

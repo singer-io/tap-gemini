@@ -1,6 +1,8 @@
 # coding=utf-8
 """
 Yahoo Gemini API reporting
+
+https://developer.yahoo.com/nativeandsearch/guide/reporting/
 """
 
 import csv
@@ -8,10 +10,17 @@ import datetime
 import logging
 import time
 
+import pytz
+
 LOGGER = logging.getLogger(__name__)
 
-YAHOO_REPORT_ENDPOINT = 'reports/custom'
-DATE_FORMAT = '%Y-%m-%d'
+REPORT_ENDPOINT = 'reports'
+CUSTOM_REPORT_ENDPOINT = REPORT_ENDPOINT + '/custom'
+
+
+class BooksClosedNotImplementedError(NotImplementedError):
+    """Books Closed is not supported for this cube."""
+    pass
 
 
 class GeminiReport:
@@ -21,45 +30,52 @@ class GeminiReport:
     https://developer.yahoo.com/nativeandsearch/guide/reporting/
     """
 
-    def __init__(self, session, report_definition: dict, poll_interval: float = 1.):
-        self.report_definition = report_definition
+    def __init__(self, session, advertiser_ids: list, cube: str, field_names: list,
+                 start_date: datetime.date, end_date: datetime.date = None, filters: list = None,
+                 poll_interval: float = 1.0):
+        self.advertiser_ids = advertiser_ids
+        self.cube = cube
+        self.field_names = field_names
+        self.start_date = start_date
+        self.end_date = end_date or datetime.date.today()
+        self.filters = filters or list()
         self.session = session
-        self.poll_interval = poll_interval
+        self.poll_interval = float(poll_interval)
         self.job_id = None
         self.download_url = None
 
-    @staticmethod
-    def build_definition(advertiser_ids: list, cube: str, field_names: list,
-                         start_date: datetime.date, end_date: datetime.date = None,
-                         filters: list = None):
+    @property
+    def definition(self) -> dict:
         """
         Build report definition
 
         https://developer.yahoo.com/nativeandsearch/guide/reporting/
         """
 
-        if end_date is None:
-            end_date = datetime.date.today()
-
-        # Use ISO formatting
-        start_date = start_date.strftime(DATE_FORMAT)
-        end_date = end_date.strftime(DATE_FORMAT)
-
         # Mandatory filters
         _filters = [
-            # Accounts
-            {'field': 'Advertiser ID', 'operator': 'IN', 'values': advertiser_ids},
-            # Time range
-            {'field': 'Day', 'from': start_date, 'operator': 'between', 'to': end_date}
-        ]
-        if filters:
-            # Optional filters
-            _filters.extend(filters)
 
-        # Build report definition
+            # Accounts
+            {
+                'field': 'Advertiser ID',
+                'operator': 'IN',
+                'values': self.advertiser_ids
+            },
+
+            # Time range
+            {
+                'field': 'Day',
+                'from': self.start_date.isoformat(), 'operator': 'between',
+                'to': self.end_date.isoformat()
+            }
+        ]
+
+        # Optional filters
+        _filters.extend(self.filters)
+
         return dict(
-            cube=cube,
-            fields=[dict(field=str(field_name)) for field_name in field_names],
+            cube=self.cube,
+            fields=[dict(field=str(field_name)) for field_name in self.field_names],
             filters=_filters
         )
 
@@ -72,8 +88,8 @@ class GeminiReport:
 
         data = self.session.call(
             method='POST',
-            endpoint=YAHOO_REPORT_ENDPOINT,
-            json=self.report_definition
+            endpoint=CUSTOM_REPORT_ENDPOINT,
+            json=self.definition
         )
 
         # Raise errors
@@ -103,7 +119,7 @@ class GeminiReport:
             else:
                 job_id = self.submit()
 
-        endpoint = "{}/{}".format(YAHOO_REPORT_ENDPOINT, job_id)
+        endpoint = "{}/{}".format(CUSTOM_REPORT_ENDPOINT, job_id)
 
         # Repeatedly poll the reporting server until the data is ready to download
         n_attempts = 0
@@ -112,8 +128,8 @@ class GeminiReport:
         while True:
             n_attempts += 1
 
-            # Time delay (minimum one second)
-            secs = (max(1.0, self.poll_interval) + 0.5) ** n_attempts
+            # Time delay (minimum one second) with exponential back-off
+            secs = (max(1.0, self.poll_interval) + 0.2) ** n_attempts
 
             response = self.session.call(
                 endpoint=endpoint,
@@ -167,12 +183,8 @@ class GeminiReport:
         reader = csv.reader(data)
         headers = next(reader)  # list
 
-        # Yield data rows from the CSV stream
+        # Yield data rows (dictionaries) from the CSV stream
         yield from csv.DictReader(data, fieldnames=headers)
-
-    def parse_timestamps(self, timestamp: datetime.datetime) -> datetime.datetime:
-        """Parse timestamps and insert time zone info"""
-        raise NotImplementedError()
 
     @property
     def advertiser_id(self) -> int:
@@ -184,28 +196,83 @@ class GeminiReport:
         sample request, with “123456” as the first advertiser ID, make a GET call to
         /reports/custom/{JobId}?advertiserId=123456
         """
-        # Iterate over filters in report request
-        for report_filter in self.report_definition['filters']:
-            if report_filter['field'] == 'Advertiser ID':
-                try:
-                    return report_filter['value']
-                except KeyError:
-                    return report_filter['values'][0]
 
-        raise ValueError('No advertiser ID specified')
-
-    @property
-    def end_date(self) -> datetime.date:
-        """The end of the time range for this report"""
-        for report_filter in self.report_definition['filters']:
-            if report_filter['field'] == 'Day':
-                return report_filter['to']
-        raise ValueError('No date range specified')
+        return self.advertiser_ids[0]
 
     @property
     def tags(self) -> dict:
         """Tags to provide meta-data to metric messages"""
         return dict(
-            endpoint=YAHOO_REPORT_ENDPOINT,
-            cube=self.report_definition['cube']
+            endpoint=REPORT_ENDPOINT,
+            cube=self.cube
+        )
+
+    def close_of_business(self, date: datetime.date) -> dict:
+        """
+        Get the status of the books (are they closed for the day?)
+
+        See: About Books Closed
+        https://developer.yahoo.com/nativeandsearch/guide/reporting/
+        """
+
+        endpoint = REPORT_ENDPOINT + '/cob'
+        date_string = date.strftime('%Y%m%d')
+
+        def _close_of_business(cube: str = None) -> dict:
+            """Implement this function"""
+
+            # Mandatory parameters
+            params = dict(
+                advertiserId=self.advertiser_id,
+                date=date_string,
+            )
+
+            # Optional parameter
+            if cube is not None:
+                params['cubeName'] = cube
+
+            return self.session.call(
+                endpoint=endpoint,
+                params=params
+            )
+
+        try:
+            return _close_of_business(cube=self.cube)
+
+        except RuntimeError as e:
+            error = e.args[0]
+            if error['code'] == 'E40000_INVALID_INPUT':
+                if error['message'] == 'Invalid cubeName passed':
+                    LOGGER.warning('Cube "%s" is not in the list of currently supported reports',
+                                   self.cube)
+
+                    # Call the endpoint without specifying a cube
+                    LOGGER.info('Retrying close of business for "%s" with no cube specified', date)
+                    return _close_of_business()
+            raise
+
+    def are_books_closed(self, date: datetime.date) -> datetime.datetime:
+        """
+        Check whether books are closed for the specified date.
+
+        :returns: Timezone-aware timestamp for the time when the books were closed.
+        """
+
+        status = self.close_of_business(date)
+
+        books_closed = status['isDayClosed'] | status['isMonthClosed']
+
+        # Completion percentage (what fraction of the books are closed)
+        books_closed_ratio = status.get('dayProgressPercent')
+
+        # The completion percentage is not provided if no cube is specified
+        if books_closed_ratio is None:
+            books_closed_ratio = 100 if books_closed else 0
+
+        LOGGER.debug('CLOSE_OF_BUSINESS: %s %s (%s%%)', date, books_closed, books_closed_ratio)
+
+        # Build timestamp
+        return datetime.datetime.combine(
+            date=date,
+            time=datetime.time(0, tzinfo=pytz.timezone(status['advertiserTimezone']))
         )
