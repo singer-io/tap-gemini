@@ -5,27 +5,27 @@
   "additionalProperties": false,
   "properties": {
     "Advertiser ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the advertiser."
     },
     "Clicks": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of clicks."
     },
     "Spend": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The unadjusted spend amount."
     },
     "Impressions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of impressions."
     },
     "Top Domain": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The top level web domain where the ad was served."
     },
     "Package Name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The mobile package name where the ad was served."
     }
   }

@@ -5,210 +5,210 @@
   "additionalProperties": false,
   "properties": {
     "Advertiser ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the advertiser."
     },
     "Campaign ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the campaign."
     },
     "Ad Group ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the ad group."
     },
     "Ad ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the ad."
     },
     "Month": {
-      "type": "string",
+      "type": ["string", "null"],
       "format": "date-time",
       "description": "Month will be represented as the first day of the month in YYYY-MM-DD format. Either Day, Week or Month must be queried."
     },
     "Week": {
-      "type": "string",
+      "type": ["string", "null"],
       "format": "date-time",
       "description": "Week will be represented as the first day of the week in YYYY-MM-DD format. This will always be Monday. Either Day, Week or Month must be queried."
     },
     "Day": {
-      "type": "string",
+      "type": ["string", "null"],
       "format": "date-time",
       "description": "The date in YYYY-MM-DD format. Either Day, Week or Month must be queried."
     },
     "Hour": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The hour in integer format. For example, 1 means reporting stats between 1am and 2am."
     },
     "Pricing Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "CPC, CPM"
     },
     "Device Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Device type of the user: Desktop, Tablet, Phone, Unknown. Note that Device Type data is only available after the field is launched. If you run it for a previous date, it will return NONE in the Device Type column."
     },
     "Source Name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Native, Search or Other."
     },
     "Impressions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of impressions."
     },
     "Clicks": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of clicks."
     },
     "Post Click Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of post click conversions."
     },
     "Post Impression Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of post view conversions."
     },
     "Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of conversions, includes both post click and post view conversions. For app install campaigns the default conversion windows are 7 days post-click and 1 day post view. For website conversions the default windows are 30 days post-click and 2 days post-view."
     },
     "Total Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "A synonym for the Conversions field (is kept for backwards compatibility)."
     },
     "Spend": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The unadjusted spend amount. Please note that adjustments - meaning any corrections due to issues like overcharging - can be queried using the adjustment_stats cube."
     },
     "Average Position": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "Impression weighted average position."
     },
     "Max Bid": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The maximum bid value."
     },
     "Ad Extn Impressions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Total impressions for which an ad extension was displayed."
     },
     "Ad Extn Clicks": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Total clicks on an ad extension link (rather than on the ad landing URL)."
     },
     "Ad Extn Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Total conversions which were attributed back to an ad extension link click."
     },
     "Ad Extn Spend": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The spend resulting from clicking on an ad extension link."
     },
     "Average CPC": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The average CPC bid value."
     },
     "Average CPM": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The average CPM bid value."
     },
     "CTR": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The clickthrough rate."
     },
     "Video Starts": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of video starts."
     },
     "Video Views": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of video views."
     },
     "Video 25% Complete": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Number of times the video played to 25% of its length."
     },
     "Video 50% Complete": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Number of times the video played to 50% of its length."
     },
     "Video 75% Complete": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Number of times the video played to 75% of its length."
     },
     "Video 100% Complete": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Number of times the video played to 100% of its length."
     },
     "Cost Per Video View": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "Average cost per video view."
     },
     "Video Closed": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of times the video was closed."
     },
     "Video Skipped": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of times the video was skipped."
     },
     "Video after 30 seconds view": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of times the video played longer than 30 seconds."
     },
     "In App Post Click Convs": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Total Post Click Conversions that occurred in the app after it was installed. These conversions occurred in the app, but were attributed to clicks made on an ad outside of the app."
     },
     "In App Post View Convs": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Total Post View Conversions that occurred in the app after it was installed. These conversions occurred in the app, but were attributed to impressions made on an ad outside of the app."
     },
     "In App Post Install Convs": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Total Post Install Conversions that occurred in the app after it was installed. These conversions occurred in the app, but were attributed to the installation made on an ad outside of the app."
     },
     "Opens": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Number of impressions of the Mail Ad asset."
     },
     "Saves": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Number of users who clicked save."
     },
     "Save Rate": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "Rate of saves (over opens)."
     },
     "Forwards": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Number of email addresses the email was forwarded to."
     },
     "Forward Rate": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "Rate of forwards (over opens)."
     },
     "Click Outs": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "Number of users to clicked out to advertiser landing page."
     },
     "Click Outs Rate": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "Rate of clickouts (over opens)."
     },
     "Fact Conversion Counting": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "The way your conversions were counted for the campaign during the report time range (ALL_PER_INTERACTION, ONE_PER_INTERACTION)."
     },
     "Interactions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of positive user interactions with an ad, like swipes, saves, opens, submits, and so on for example, the number of carousel cards viewed. Note that video play interactions are only counted from sessions that qualify for an interactive impression."
     },
     "Interaction Rate": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The sum of all interactions (both positive and neutral) relative to the total number of impressions, expressed as a percentage for example, .3. Note that neutral interactions include interactions like close or skip ad."
     },
     "Interactive Impressions Rate": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The sum of positive interactions impressions relative to the total number of impressions, expressed as a percentage for example, .5."
     }
   }

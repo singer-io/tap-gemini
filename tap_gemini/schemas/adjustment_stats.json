@@ -5,52 +5,52 @@
   "additionalProperties": false,
   "properties": {
     "Advertiser ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the advertiser."
     },
     "Campaign ID": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The identifier of the campaign."
     },
     "Day": {
-      "type":"string",
+      "type": ["string", "null"],
       "format": "date-time",
       "description": "The date in YYYY-MM-DD format."
     },
     "Pricing Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "CPC, CPM"
     },
     "Source Name": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "Native, Search or Other."
     },
     "Is Adjustment": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "For adjustment rows (Is Adjustment = Y) all fact values other than Spend are always blank. Pricing Type and Source values are also blank."
     },
     "Adjustment Type": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "If you request a report at Campaign ID granularity (Campaign ID is in your fields list), then you will get only campaign adjustment rows (plus unadjusted rows). If you request a report at Advertiser ID granularity (Advertiser ID is in your fields list), then you will potentially get both account adjustments (Adjustment Type = Account) and rolled up campaign adjustment (Adjustment Type = Campaign), as well as unadjusted rows (Adjustment Type = None)."
     },
     "Impressions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of impressions."
     },
     "Clicks": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The number of clicks."
     },
     "Conversions": {
-      "type": "integer",
+      "type": ["integer", "null"],
       "description": "The total number of conversions includes both post click and post view conversions."
     },
     "Spend": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "The spend amount."
     },
     "Average Position": {
-      "type": "number",
+      "type": ["number", "null"],
       "description": "Impression weighted average position."
     }
   }
