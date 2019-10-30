@@ -1,9 +1,7 @@
 [
   {
     "metadata": {
-      "selected": true,
-      "inclusion": "available",
-      "replication_method": "FULL_TABLE"
+      "inclusion": "available"
     },
     "breadcrumb": []
   },

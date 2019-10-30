@@ -228,7 +228,7 @@ class GeminiSession(requests.Session):
 
             # Raise client errors
             if response.status_code == http.HTTPStatus.BAD_REQUEST:
-                raise RuntimeError(*response.json()['errors']) from http_error
+                raise RuntimeError(response.json().get('errors',response.json().get('error',"Unknown Error"))) from http_error
 
             raise
 

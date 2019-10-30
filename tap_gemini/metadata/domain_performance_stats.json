@@ -1,20 +1,9 @@
 [
   {
     "metadata": {
-      "selected": true,
-      "inclusion": "available",
-      "replication_method": "INCREMENTAL"
+      "inclusion": "available"
     },
     "breadcrumb": []
-  },
-  {
-    "metadata": {
-      "inclusion": "automatic"
-    },
-    "breadcrumb": [
-      "properties",
-      "Day"
-    ]
   },
   {
     "metadata": {
