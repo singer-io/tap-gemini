@@ -12,6 +12,8 @@ import time
 
 import pytz
 
+import tap_gemini.exceptions
+
 LOGGER = logging.getLogger(__name__)
 
 REPORT_ENDPOINT = 'reports'
@@ -239,17 +241,14 @@ class GeminiReport:
         try:
             return _close_of_business(cube=self.cube)
 
-        except RuntimeError as e:
-            error = e.args[0]
-            if error['code'] == 'E40000_INVALID_INPUT':
-                if error['message'] == 'Invalid cubeName passed':
-                    LOGGER.warning('Cube "%s" is not in the list of currently supported reports',
-                                   self.cube)
+        # Handle unsupported reports
+        except tap_gemini.exceptions.InvalidInputError:
+            LOGGER.warning('Cube "%s" is not in the list of currently supported reports', self.cube)
 
-                    # Call the endpoint without specifying a cube
-                    LOGGER.info('Retrying close of business for "%s" with no cube specified', date)
-                    return _close_of_business()
-            raise
+            # Call the endpoint without specifying a cube
+            LOGGER.info('Retrying close of business for "%s" with no cube specified', date)
+
+            return _close_of_business()
 
     def are_books_closed(self, date: datetime.date) -> datetime.datetime:
         """

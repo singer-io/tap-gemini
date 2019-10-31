@@ -5,16 +5,15 @@ Yahoo Gemini API transport layer via a HTTP session
 https://developer.yahoo.com/nativeandsearch/guide/
 """
 
-import argparse
 import datetime
 import http
-import json
 import logging
 import urllib.parse
 
 import requests
-
 import singer
+
+import tap_gemini.exceptions
 
 LOGGER = logging.getLogger(__name__)
 
@@ -25,6 +24,41 @@ AUTHENTICATION_URL = "https://api.login.yahoo.com/oauth2/get_token"
 
 # https://developer.yahoo.com/nativeandsearch/guide/navigate-the-api/versioning/
 DEFAULT_API_VERSION = 3
+
+# Map HTTP error codes to specific exceptions
+ERROR_MAP = {
+    500: {
+        'E10000_INTERNAL_SERVER_ERROR': tap_gemini.exceptions.InternalServerError,
+        'E60000_UNKNOWN_REPORTING_ERROR': tap_gemini.exceptions.UnknownReportingError,
+    },
+    406: {
+        'E30001_UNSUPPORTED_FEATURE': tap_gemini.exceptions.UnsupportedFeatureError
+    },
+    400: {
+        'E40000_INVALID_INPUT': tap_gemini.exceptions.InvalidInputError
+    },
+    401: {
+        'E50000_AUTHORIZATION_ERROR': tap_gemini.exceptions.AuthorizationError
+    },
+    503: {
+        'E50003_SERVICE_UNAVAILABLE': tap_gemini.exceptions.ServiceUnavailableError
+    },
+    408: {
+        'E40001_REQUEST_TIMEOUT': tap_gemini.exceptions.RequestTimeoutError
+    },
+    405: {
+        'E40002_ACCOUNT_IN_SYNC_READ_ONLY': tap_gemini.exceptions.AccountInSyncReadOnlyError
+    },
+    403: {
+        'E40003_TOO_MANY_REQUESTS': tap_gemini.exceptions.TooManyRequestsError
+    },
+    409: {
+        'E40004_REQUEST_CONFLICT': tap_gemini.exceptions.RequestsConflictError
+    },
+    404: {
+        'E40005_NOT_FOUND': tap_gemini.exceptions.NotFoundError
+    },
+}
 
 
 class GeminiSession(requests.Session):
@@ -184,26 +218,6 @@ class GeminiSession(requests.Session):
         for header, value in response.headers.items():
             LOGGER.debug("RESPONSE %s: %s", header, value)
 
-    @staticmethod
-    def log_response_errors(response: requests.Response):
-        LOGGER.error(response.request.url)
-
-        try:
-            # Parse response
-            data = response.json()
-            errors = data.pop('errors', dict())
-
-            # Log error messages
-            for key, value in data.items():
-                LOGGER.error("%s: %s", key, value)
-
-            for error in errors:
-                for key, value in error.items():
-                    LOGGER.error("%s: %s", key, value)
-
-        except json.JSONDecodeError:
-            LOGGER.error(response.text)
-
     def request(self, method: str, url: str, *args, **kwargs) -> requests.Response:
         """Wrapper for requests methods, implement error handling"""
 
@@ -215,22 +229,24 @@ class GeminiSession(requests.Session):
             response.raise_for_status()
 
         # Handle HTTP errors
-        # See: https://developer.yahoo.com/nativeandsearch/guide/v1-api/error-responses.html
         except requests.HTTPError as http_error:
 
             # Clear authentication info
             if response.status_code == http.HTTPStatus.UNAUTHORIZED:
                 del self.access_token
 
-            # Log errors
-            response = http_error.response
-            self.log_response_errors(response)
+            # De-serialise JSON response
+            data = response.json()
 
-            # Raise client errors
-            if response.status_code == http.HTTPStatus.BAD_REQUEST:
-                raise RuntimeError(response.json().get('errors',response.json().get('error',"Unknown Error"))) from http_error
+            # Get the first error encountered
+            error = data.get('error', data['errors'[0]])
 
-            raise
+            LOGGER.error(error)
+
+            # Raise an appropriate specific exception
+            gemini_error = ERROR_MAP[response.status_code][error['code']]
+
+            raise gemini_error(error) from http_error
 
         return response
 
