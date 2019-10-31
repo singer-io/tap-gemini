@@ -1,2 +1,3 @@
 include LICENSE
 include tap_gemini/schemas/*.json
+include tap_gemini/metadata/*.json

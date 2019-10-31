@@ -1,10 +1,7 @@
 [
   {
     "metadata": {
-      "selected": true,
-      "inclusion": "available",
-      "replication_method": "INCREMENTAL",
-      "replication-key": "Day"
+      "inclusion": "available"
     },
     "breadcrumb": []
   },
