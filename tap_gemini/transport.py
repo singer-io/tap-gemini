@@ -238,10 +238,13 @@ class GeminiSession(requests.Session):
             # De-serialise JSON response
             data = response.json()
 
+            # Get one or more errors returned from the API
             errors = list()
 
+            # By default, we expect multiple errors, so extend the list
             try:
                 errors.extend(data['errors'])
+            # If a single error occurs then append it to the list
             except KeyError:
                 errors.append(data['error'])
 
