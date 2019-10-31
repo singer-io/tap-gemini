@@ -238,15 +238,22 @@ class GeminiSession(requests.Session):
             # De-serialise JSON response
             data = response.json()
 
-            # Get the first error encountered
-            error = data.get('error', data['errors'[0]])
+            errors = list()
 
-            LOGGER.error(error)
+            try:
+                errors.extend(data['errors'])
+            except KeyError:
+                errors.append(data['error'])
 
-            # Raise an appropriate specific exception
-            gemini_error = ERROR_MAP[response.status_code][error['code']]
+            # Log all errors
+            for error in errors:
+                LOGGER.error(error)
 
-            raise gemini_error(error) from http_error
+            # Raise an appropriate specific exception for the first error encountered
+            for error in errors:
+                gemini_error = ERROR_MAP[response.status_code][error['code']]
+
+                raise gemini_error(error) from http_error
 
         return response
 
