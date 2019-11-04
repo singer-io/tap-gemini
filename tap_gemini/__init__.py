@@ -164,7 +164,9 @@ def discover() -> singer.Catalog:
 
     raw_schemas = load_schemas()
     metadata = load_metadata()
-    key_properties = load_key_properties()
+    # Disable key properties, which aren't currently used
+    # key_properties = load_key_properties()
+    key_properties = dict()
 
     streams = list()
 
