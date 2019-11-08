@@ -223,10 +223,7 @@ def build_report_params(config: dict, stream, start_date: datetime.datetime,
     if end_date is None:
         end_date = cast_date_to_datetime(date=datetime.date.today())
 
-    advertiser_ids = list(config['advertiser_ids'])
-
     return dict(
-        advertiser_ids=advertiser_ids,
         cube=str(stream.stream),
         field_names=list(stream.schema.properties.keys()),
         start_date=datetime.date(start_date.year, start_date.month, start_date.day),
@@ -432,6 +429,8 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
     """
     Synchronise data from source schemas using input context
     """
+    
+    session = None
 
     # Get bookmarks of state of each stream
     bookmarks = state.get('bookmarks', dict())
@@ -464,19 +463,23 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
             key_properties=stream.key_properties
         )
 
-        # Initialise Gemini HTTP API session
-        session = tap_gemini.transport.GeminiSession(
-            # Mandatory
-            client_id=config['username'],
-            client_secret=config['password'],
-            refresh_token=config['refresh_token'],
+        # Initialise Gemini HTTP API session (only do this once)
+        if session is None:
+            session = tap_gemini.transport.GeminiSession(
+                # Mandatory
+                client_id=config['username'],
+                client_secret=config['password'],
+                refresh_token=config['refresh_token'],
 
-            # Optional
-            api_version=config.get('api_version'),
-            user_agent=config.get('user_agent'),
-            session_options=config.get('session', dict()),
-            sandbox=config.get('sandbox')
-        )
+                # Optional
+                api_version=config.get('api_version'),
+                user_agent=config.get('user_agent'),
+                session_options=config.get('session', dict()),
+                sandbox=config.get('sandbox')
+            )
+            
+            # Get a list of all the account IDs
+            advertiser_ids = config.get('advertiser_ids', [adv['id'] for adv in session.advertisers])
 
         # Create data stream
         if stream_id in OBJECT_MAP.keys():
@@ -537,6 +540,8 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                     start_date=start,
                     end_date=end
                 )
+
+                report_params['advertiser_ids'] = advertiser_ids
 
                 # Define the report
                 rep = tap_gemini.report.GeminiReport(
