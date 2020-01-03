@@ -18,6 +18,7 @@ LOGGER = logging.getLogger(__name__)
 
 REPORT_ENDPOINT = 'reports'
 CUSTOM_REPORT_ENDPOINT = REPORT_ENDPOINT + '/custom'
+DEFAULT_POLL_INTERVAL = 1.0
 
 
 class BooksClosedNotImplementedError(NotImplementedError):
@@ -34,7 +35,7 @@ class GeminiReport:
 
     def __init__(self, session, advertiser_ids: list, cube: str, field_names: list,
                  start_date: datetime.date, end_date: datetime.date = None, filters: list = None,
-                 poll_interval: float = 1.0):
+                 poll_interval: float = None):
         self.advertiser_ids = advertiser_ids
         self.cube = cube
         self.field_names = field_names
@@ -42,7 +43,7 @@ class GeminiReport:
         self.end_date = end_date or datetime.date.today()
         self.filters = filters or list()
         self.session = session
-        self.poll_interval = float(poll_interval)
+        self.poll_interval = float(poll_interval or DEFAULT_POLL_INTERVAL)
         self.job_id = None
         self.download_url = None
 
