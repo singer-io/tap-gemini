@@ -165,7 +165,7 @@ def discover() -> singer.Catalog:
     raw_schemas = load_schemas()
     metadata = load_metadata()
     # Disable key properties to avoid file-not-found errors because these aren't used
-    #key_properties = load_key_properties()
+    # key_properties = load_key_properties()
     key_properties = dict()
 
     streams = list()
@@ -344,9 +344,16 @@ def transform_record(record: dict, schema: dict) -> dict:
     for key, value in record.items():
 
         # Get the property definition from the schema
-        prop = schema['properties'][key]
 
-        data_type = prop['type']
+        data_type = "string"
+        data_format = None
+
+        # Need to write the whole schema for ads and ad groups
+
+        if key in schema['properties']:
+            prop = schema['properties'][key]
+            data_type = prop['type']
+            data_format = prop.get('format')
 
         # If multiple data types are defined, pick one at random
         if not isinstance(data_type, str):
@@ -362,7 +369,7 @@ def transform_record(record: dict, schema: dict) -> dict:
             value = transform_property(
                 value=value,
                 data_type=data_type,
-                string_format=prop.get('format')
+                string_format=data_format
             )
 
         # Show which property has caused the problem
@@ -429,7 +436,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
     """
     Synchronise data from source schemas using input context
     """
-    
+
     session = None
 
     # Get bookmarks of state of each stream
@@ -477,7 +484,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                 session_options=config.get('session', dict()),
                 sandbox=config.get('sandbox')
             )
-            
+
             # Get a list of all the account IDs
             advertiser_ids = config.get('advertiser_ids', [adv['id'] for adv in session.advertisers])
 
