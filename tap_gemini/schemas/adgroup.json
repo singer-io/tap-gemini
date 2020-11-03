@@ -16,6 +16,7 @@
         "string",
         "null"
       ],
+      "format": "date-time",
       "description": "Title of Ads"
     },
     "bidSet": {
@@ -79,6 +80,7 @@
         "string",
         "null"
       ],
+      "format": "date-time",
       "description": "Title of Ads"
     }
   }
