@@ -1,0 +1,17 @@
+[
+  {
+    "metadata": {
+      "inclusion": "available"
+    },
+    "breadcrumb": []
+  },
+  {
+    "metadata": {
+      "inclusion": "automatic"
+    },
+    "breadcrumb": [
+      "properties",
+      "id"
+    ]
+  }
+]

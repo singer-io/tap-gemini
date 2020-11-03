@@ -344,6 +344,9 @@ def transform_record(record: dict, schema: dict) -> dict:
     for key, value in record.items():
 
         # Get the property definition from the schema
+        if key not in schema['properties']:
+            continue
+
         prop = schema['properties'][key]
 
         data_type = prop['type']
@@ -429,7 +432,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
     """
     Synchronise data from source schemas using input context
     """
-    
+
     session = None
 
     # Get bookmarks of state of each stream
@@ -477,7 +480,7 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
                 session_options=config.get('session', dict()),
                 sandbox=config.get('sandbox')
             )
-            
+
             # Get a list of all the account IDs
             advertiser_ids = config.get('advertiser_ids', [adv['id'] for adv in session.advertisers])
 

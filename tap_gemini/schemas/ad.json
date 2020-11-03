@@ -1,0 +1,197 @@
+{
+  "type": [
+    "object"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Title of Ads"
+    },
+    "status": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Title of Ads"
+    },
+    "adGroupId": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Title of Ads"
+    },
+    "advertiserId": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "The identifier of the advertiser."
+    },
+    "campaignId": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "The identifier of the campaign."
+    },
+    "assets": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A list of JSON objects representing additional ad assets - for example, carousel image cards"
+    },
+    "flashSaleConfig": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "lastUpdateDate": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "createdDate": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "landingUrl": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "imageUrl": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "adName": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "imageUrlHQ": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "videoPrimaryUrl": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "callToActionText": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "contentUrl": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "displayUrl": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "sponsoredBy": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "trackingUrl": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "customParameters": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "isAdTemplate": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "optimizeAssets": {
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "dpaDomain": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "finalUrl": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "displayUrlPath1": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "displayUrlPath2": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    },
+    "title2": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "A configuration object containing all the necessary information for configuring a flash sale ad. Fields include:"
+    }
+  }
+}
