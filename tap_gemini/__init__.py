@@ -165,7 +165,7 @@ def discover() -> singer.Catalog:
     raw_schemas = load_schemas()
     metadata = load_metadata()
     # Disable key properties to avoid file-not-found errors because these aren't used
-    # key_properties = load_key_properties()
+    #key_properties = load_key_properties()
     key_properties = dict()
 
     streams = list()
@@ -344,16 +344,12 @@ def transform_record(record: dict, schema: dict) -> dict:
     for key, value in record.items():
 
         # Get the property definition from the schema
+        if key not in schema['properties']:
+            continue
 
-        data_type = "string"
-        data_format = None
+        prop = schema['properties'][key]
 
-        # Need to write the whole schema for ads and ad groups
-
-        if key in schema['properties']:
-            prop = schema['properties'][key]
-            data_type = prop['type']
-            data_format = prop.get('format')
+        data_type = prop['type']
 
         # If multiple data types are defined, pick one at random
         if not isinstance(data_type, str):
@@ -369,7 +365,7 @@ def transform_record(record: dict, schema: dict) -> dict:
             value = transform_property(
                 value=value,
                 data_type=data_type,
-                string_format=data_format
+                string_format=prop.get('format')
             )
 
         # Show which property has caused the problem
