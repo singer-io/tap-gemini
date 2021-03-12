@@ -13,6 +13,7 @@ import time
 import pytz
 
 import tap_gemini.exceptions
+import requests
 
 LOGGER = logging.getLogger(__name__)
 
@@ -177,7 +178,7 @@ class GeminiReport:
             self.poll()
 
         # Stream report data CSV, line by line
-        response = self.session.get(self.download_url, stream=True)
+        response = requests.get(self.download_url, stream=True)
         data = response.iter_lines(decode_unicode=True)
 
         # Parse CSV format
