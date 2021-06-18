@@ -32,31 +32,42 @@ ERROR_MAP = {
         'E60000_UNKNOWN_REPORTING_ERROR': tap_gemini.exceptions.UnknownReportingError,
     },
     406: {
-        'E30001_UNSUPPORTED_FEATURE': tap_gemini.exceptions.UnsupportedFeatureError
+        '406_UNDEFINED': tap_gemini.exceptions.UnsupportedFeatureError,
+        'E30001_UNSUPPORTED_FEATURE': tap_gemini.exceptions.UnsupportedFeatureError,
     },
     400: {
-        'E40000_INVALID_INPUT': tap_gemini.exceptions.InvalidInputError
+        '400_UNDEFINED': tap_gemini.exceptions.InvalidInputError,
+        'INVALID_CONSUMER_KEY': tap_gemini.exceptions.InvalidInputError,
+        'E40000_INVALID_INPUT': tap_gemini.exceptions.InvalidInputError,
+
     },
     401: {
-        'E50000_AUTHORIZATION_ERROR': tap_gemini.exceptions.AuthorizationError
+        '401_UNDEFINED': tap_gemini.exceptions.AuthorizationError,
+        'E50000_AUTHORIZATION_ERROR': tap_gemini.exceptions.AuthorizationError,
     },
     503: {
-        'E50003_SERVICE_UNAVAILABLE': tap_gemini.exceptions.ServiceUnavailableError
+        '503_UNDEFINED': tap_gemini.exceptions.ServiceUnavailableError,
+        'E50003_SERVICE_UNAVAILABLE': tap_gemini.exceptions.ServiceUnavailableError,
     },
     408: {
-        'E40001_REQUEST_TIMEOUT': tap_gemini.exceptions.RequestTimeoutError
+        '408_UNDEFINED': tap_gemini.exceptions.RequestTimeoutError,
+        'E40001_REQUEST_TIMEOUT': tap_gemini.exceptions.RequestTimeoutError,
     },
     405: {
-        'E40002_ACCOUNT_IN_SYNC_READ_ONLY': tap_gemini.exceptions.AccountInSyncReadOnlyError
+        '405_UNDEFINED':tap_gemini.exceptions.AccountInSyncReadOnlyError,
+        'E40002_ACCOUNT_IN_SYNC_READ_ONLY': tap_gemini.exceptions.AccountInSyncReadOnlyError,
     },
     403: {
-        'E40003_TOO_MANY_REQUESTS': tap_gemini.exceptions.TooManyRequestsError
+        '403_UNDEFINED': tap_gemini.exceptions.AccountInSyncReadOnlyError,
+        'E40003_TOO_MANY_REQUESTS': tap_gemini.exceptions.TooManyRequestsError,
     },
     409: {
-        'E40004_REQUEST_CONFLICT': tap_gemini.exceptions.RequestsConflictError
+        '409_UNDEFINED': tap_gemini.exceptions.RequestsConflictError,
+        'E40004_REQUEST_CONFLICT': tap_gemini.exceptions.RequestsConflictError,
     },
     404: {
-        'E40005_NOT_FOUND': tap_gemini.exceptions.NotFoundError
+        '404_UNDEFINED': tap_gemini.exceptions.NotFoundError,
+        'E40005_NOT_FOUND': tap_gemini.exceptions.NotFoundError,
     },
 }
 
@@ -254,10 +265,14 @@ class GeminiSession(requests.Session):
 
             # Raise an appropriate specific exception for the first error encountered
             for error in errors:
-                gemini_error = ERROR_MAP[response.status_code][error['code']]
+                if isinstance(error, list):
+                    gemini_error = ERROR_MAP[response.status_code][error['code']]
+                else:
+                    if error not in ERROR_MAP[response.status_code]:
+                        error = str(response.status_code) + "_UNDEFINED"
+                    gemini_error = ERROR_MAP[response.status_code].get(error)
 
                 raise gemini_error(error) from http_error
-
         return response
 
     def call(self, method: str = 'GET', endpoint: str = '', tags: dict = None, **kwargs):
