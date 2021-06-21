@@ -58,7 +58,7 @@ ERROR_MAP = {
         'E40002_ACCOUNT_IN_SYNC_READ_ONLY': tap_gemini.exceptions.AccountInSyncReadOnlyError,
     },
     403: {
-        '403_UNDEFINED': tap_gemini.exceptions.AccountInSyncReadOnlyError,
+        '403_UNDEFINED': tap_gemini.exceptions.TooManyRequestsError,
         'E40003_TOO_MANY_REQUESTS': tap_gemini.exceptions.TooManyRequestsError,
     },
     409: {
