@@ -265,7 +265,7 @@ class GeminiSession(requests.Session):
 
             # Raise an appropriate specific exception for the first error encountered
             for error in errors:
-                if isinstance(error, list):
+                if isinstance(error, dict):
                     gemini_error = ERROR_MAP[response.status_code][error['code']]
                 else:
                     if error not in ERROR_MAP[response.status_code]:
