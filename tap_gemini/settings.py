@@ -43,7 +43,8 @@ MAX_LOOK_BACK_DAYS = dict(
     ad_extension_details=400,
     adjustment_stats=400,
     product_ad_performance_stats=400,
-    user_stats=400
+    user_stats=400,
+    campaign_bid_performance_stats=400
 )
 
 BOOKMARK_KEY = 'start_date'
