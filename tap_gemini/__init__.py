@@ -14,6 +14,7 @@ Singer:
 
 import datetime
 import json
+import logging
 import os
 
 import pytz
@@ -27,7 +28,7 @@ import tap_gemini.report
 import tap_gemini.transport
 import tap_gemini.settings
 
-LOGGER = singer.get_logger()
+LOGGER = logging.getLogger("Gemini")
 
 # Map schema name to API object
 OBJECT_MAP = dict(
@@ -87,10 +88,10 @@ def load_directory(dir_path: str) -> dict:
             try:
                 data[name] = json.load(file)
             except json.JSONDecodeError:
-                singer.log_error('JSON syntax error in file "%s"', file.name)
+                LOGGER.error('JSON syntax error in file "%s"', file.name)
                 raise
 
-            singer.log_debug('Loaded "%s"', file.name)
+            LOGGER.debug('Loaded "%s"', file.name)
 
     return data
 
@@ -253,7 +254,7 @@ def filter_schema(schema: dict, metadata: list) -> dict:
                 if not selected or (inclusion == 'unsupported'):
                     del schema.properties[property_name]
 
-                    singer.log_debug('Removed property "%s"', property_name)
+                    LOGGER.debug('Removed property "%s"', property_name)
 
         except IndexError:
             pass
@@ -441,10 +442,10 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
     # Parse timestamp and convert to date
     start_date = singer.utils.strptime_to_utc(config['start_date'])
 
-    selected_stream_ids = get_selected_streams(catalog)
-
-    if not selected_stream_ids:
-        singer.log_warning('No streams selected')
+    # selected_stream_ids = get_selected_streams(catalog)
+    #
+    # if not selected_stream_ids:
+    #     singer.log_warning('No streams selected')
 
     # Iterate over streams in catalog
     for stream in catalog.streams:
@@ -452,8 +453,8 @@ def sync(config: dict, state: dict, catalog: singer.Catalog):
         stream_id = stream.tap_stream_id
 
         # Skip if not selected for sync
-        if stream_id not in selected_stream_ids:
-            continue
+        # if stream_id not in selected_stream_ids:
+        #     continue
 
         LOGGER.info('Syncing stream: "%s"', stream_id)
 

@@ -105,3 +105,7 @@ state.json
 .idea/
 
 *.csv
+
+
+catalog.json
+

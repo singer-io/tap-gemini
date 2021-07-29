@@ -11,6 +11,7 @@ setup(
     py_modules=["tap_gemini"],
     install_requires=[
         "singer-python==5.4.1",
+        "tenacity==8.0.1",
         "requests==2.21.0",
         "pytz==2018.4",
     ],

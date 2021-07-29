@@ -12,10 +12,12 @@ import urllib.parse
 
 import requests
 import singer
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, after_log
 
 import tap_gemini.exceptions
 
-LOGGER = logging.getLogger(__name__)
+
+LOGGER = logging.getLogger("GeminiSession")
 
 BASE_URL_FORMAT = "https://api.gemini.yahoo.com/v{}/rest/"
 SANDBOX_URL_FORMAT = "https://sandbox-api.gemini.yahoo.com/v{}/rest/"
@@ -74,6 +76,13 @@ ERROR_MAP = {
 
 class GeminiSession(requests.Session):
     """Yahoo Gemini HTTP API Session"""
+
+    RETRY_STRATEGY = {
+        "stop": stop_after_attempt(5),
+        "wait": wait_exponential(multiplier=60),
+        "retry": (retry_if_exception_type(tap_gemini.exceptions.RetryException)),
+        "after": after_log(LOGGER, logging.INFO)
+    }
 
     def __init__(self, client_id: str, client_secret: str, refresh_token: str,
                  access_token: str = None, user_agent: str = None, sandbox: bool = False,
@@ -229,10 +238,12 @@ class GeminiSession(requests.Session):
         for header, value in response.headers.items():
             LOGGER.debug("RESPONSE %s: %s", header, value)
 
+    @retry(**RETRY_STRATEGY)
     def request(self, method: str, url: str, *args, **kwargs) -> requests.Response:
         """Wrapper for requests methods, implement error handling"""
 
         # Make HTTP request
+
         response = super().request(method, url, *args, **kwargs)
         self.log_response_headers(response)
 
@@ -245,7 +256,11 @@ class GeminiSession(requests.Session):
             # Clear authentication info
             if response.status_code == http.HTTPStatus.UNAUTHORIZED:
                 del self.access_token
+                self.headers.update(self.headers_extra)
 
+            if response.status_code in [401, 403, 500, 502, 503]:
+                LOGGER.info("Status: " + str(response.status_code))
+                raise tap_gemini.exceptions.RetryException()
             # De-serialise JSON response
             data = response.json()
 

@@ -56,3 +56,7 @@ class RequestsConflictError(GeminiHTTPError):
 
 class NotFoundError(GeminiHTTPError):
     pass
+
+
+class RetryException(Exception):
+    pass

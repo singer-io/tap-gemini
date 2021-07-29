@@ -15,7 +15,7 @@ import pytz
 import tap_gemini.exceptions
 import requests
 
-LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger("Reports")
 
 REPORT_ENDPOINT = 'reports'
 CUSTOM_REPORT_ENDPOINT = REPORT_ENDPOINT + '/custom'
