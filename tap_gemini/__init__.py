@@ -181,6 +181,9 @@ def discover() -> singer.Catalog:
         # TODO https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md#singer-python-helper-functions
         stream_metadata.extend(metadata.get(schema_name, list()))
         stream_key_properties.extend(key_properties.get(schema_name, list()))
+        meta = singer.metadata.to_map(stream_metadata)
+        for prop in schema.properties:
+            singer.metadata.write(meta, ("properties", prop), "", "")
 
         # Create catalog entry
         catalog_entry = singer.catalog.CatalogEntry()
@@ -188,7 +191,7 @@ def discover() -> singer.Catalog:
         catalog_entry.stream = schema_name
         catalog_entry.tap_stream_id = schema_name
         catalog_entry.schema = schema
-        catalog_entry.metadata = stream_metadata
+        catalog_entry.metadata = singer.metadata.to_list(meta)
         catalog_entry.key_properties = stream_key_properties
 
         streams.append(catalog_entry)
