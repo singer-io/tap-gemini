@@ -12,7 +12,7 @@ setup(
     install_requires=[
         "singer-python==5.4.1",
         "tenacity==8.0.1",
-        "requests==2.21.0",
+        "requests==2.26.0",
         "pytz==2018.4",
     ],
     entry_points="""
