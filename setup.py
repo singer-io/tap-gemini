@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name="tap-gemini",
-    version="0.1.4",
+    version="0.1.5",
     description="Singer.io tap for extracting data from Yahoo Gemini",
     author="Joe Heffer",
     url="https://github.com/singer-io/tap-gemini",
@@ -11,7 +11,7 @@ setup(
     py_modules=["tap_gemini"],
     install_requires=[
         "singer-python==5.4.1",
-        "requests==2.21.0",
+        "requests==2.31.0",
         "pytz==2018.4",
     ],
     entry_points="""
